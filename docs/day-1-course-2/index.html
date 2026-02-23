@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 1 - 로봇 비전을 위한 좌표계 이해</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Prism.js (코드 하이라이팅) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    
+    <style>
+        @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
+        
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+            color: #37352f;
+            background-color: #ffffff;
+            line-height: 1.6;
+        }
+
+        /* 노션 스타일 디테일 토글 */
+        details > summary {
+            list-style: none;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+        details[open] summary ~ * {
+            animation: sweep .2s ease-in-out;
+        }
+        @keyframes sweep {
+            0%    {opacity: 0; margin-top: -10px}
+            100%  {opacity: 1; margin-top: 0px}
+        }
+        
+        /* 체크박스 스타일링 */
+        input[type="checkbox"] {
+            accent-color: #2383e2;
+            width: 1.1rem;
+            height: 1.1rem;
+            cursor: pointer;
+        }
+
+        /* 구분선 텍스트 */
+        .divider-text {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #ccc;
+            font-size: 0.875rem;
+            margin: 2rem 0;
+        }
+        .divider-text::before,
+        .divider-text::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px dashed #e5e7eb;
+        }
+        .divider-text:not(:empty)::before {
+            margin-right: .5em;
+        }
+        .divider-text:not(:empty)::after {
+            margin-left: .5em;
+        }
+
+        .code-container {
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        /* 라이트박스 애니메이션 보조 */
+        .lightbox-fade {
+            transition: opacity 0.2s ease-in-out;
+        }
+    </style>
+</head>
+<body class="py-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+
+    <!-- Home -->
+    <div class="fixed top-4 left-4 sm:top-6 lg:left-8 z-50">
+    <a href= "https://bkyb.github.io/lacture-pages/" 
+       class="flex items-center gap-2 px-3 py-2 bg-white/80 backdrop-blur-md border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:bg-white transition-all group"
+       title="홈으로 이동">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 group-hover:text-blue-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        <span class="hidden sm:block text-sm font-medium text-gray-600 group-hover:text-gray-900">홈</span>
+    </a>
+    </div>
+
+    <!-- Header Section -->
+    <header class="mb-10">
+        <div class="text-6xl mb-4">🤖</div>
+        <h1 class="text-4xl sm:text-5xl font-bold mb-6 tracking-tight">Day 1 — 로봇 비전을 위한 좌표계 이해</h1>
+        
+        <div class="flex flex-wrap items-center text-sm text-gray-500 mb-6 gap-4 border-b border-gray-200 pb-4">
+            <div class="flex items-center gap-2">
+                <span class="bg-gray-100 px-2 py-1 rounded text-gray-700">유형</span> 2차시 실습
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="bg-gray-100 px-2 py-1 rounded text-gray-700">환경</span> Google Colab
+            </div>
+        </div>
+    </header>
+
+    <!-- Goals Callout -->
+    <div class="bg-[#f1f1ef] rounded-lg p-5 mb-8 flex items-start">
+        <div class="text-2xl mr-4 mt-1">🎯</div>
+        <div class="flex-1">
+            <h3 class="font-bold mb-2">이번 차시가 끝나면 할 수 있는 것:</h3>
+            <ul class="list-disc list-inside space-y-1 text-sm text-gray-700">
+                <li>3차원 좌표계에서의 객체 자세(카메라 기준)를 추정하는 다양한 원리를 이해한다.</li>
+                <li>solvePnP, ICP 정합, RANSAC 기반 알고리즘을 구현하여 객체의 6D 자세를 계산할 수 있다.</li>
+                <li>로봇 비전 시스템 좌표계 (Eye-to-Hand, Eye-in-Hand)의 구조를 이해한다.</li>
+                <li>Hand-Eye 캘리브레이션을 수행하여 로봇과 카메라 간의 변환 행렬을 도출할 수 있다.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Links Callout -->
+    <div class="bg-[#e8f4ec] rounded-lg p-4 mb-8 flex items-center">
+        <div class="text-xl mr-3">🔗</div>
+        <div class="text-sm">
+            <span class="font-semibold text-green-800 mr-2">Colab 실습 링크:</span>
+            <a href="#" class="text-green-700 underline hover:text-green-900 transition-colors">실습 파일 열기 (새 창)</a>
+        </div>
+    </div>
+
+    <div class="divider-text">환경 설정</div>
+
+    <!-- Section 0 -->
+    <section class="mb-12">
+        <h2 class="text-2xl font-bold mb-4 flex items-center">
+            <span class="mr-2">0.</span> 환경 설정 확인
+        </h2>
+        
+        <div class="bg-[#fdf5e6] border-l-4 border-yellow-400 p-4 mb-4 rounded-r flex items-start">
+            <div class="mr-3 mt-0.5">💡</div>
+            <div class="text-sm text-gray-800">
+                <strong>Colab 환경 주의사항:</strong> <br/>
+                이번 차시에서는 OpenCV와 더불어 3차원 데이터 처리를 위해 <strong>Open3D</strong> 라이브러리를 사용합니다.<br/>
+                Colab에서 3D 시각화 창을 띄울 수 없으므로, 변환 결과는 주로 수치나 Matplotlib을 이용한 2D 역투영으로 확인합니다.
+            </div>
+        </div>
+
+        <button class="bg-blue-500 text-white px-4 py-2 rounded text-sm font-semibold hover:bg-blue-600 transition shadow-sm mb-4" onclick="alert('가상 데이터셋 다운로드가 완료되었습니다.')">
+            실습용 샘플 데이터셋 다운로드
+        </button>
+
+        <div class="code-container bg-[#282c34] rounded-lg overflow-hidden my-4 shadow-sm text-sm">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><code class="language-python"># Open3D 설치 및 필요 라이브러리 임포트 (Colab 셀 실행)
+!pip install open3d
+
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+import open3d as o3d
+
+# 버전 확인
+print(f"OpenCV version: {cv2.__version__}")
+print(f"Open3D version: {o3d.__version__}")</code></pre>
+        </div>
+    </section>
+
+    <div class="divider-text">기본 학습 ─ 3차원 객체의 자세 구하기</div>
+
+    <!-- Section 1 -->
+    <section class="mb-16">
+        <h2 class="text-2xl font-bold mb-4 flex items-center">
+            <span class="mr-2">1.</span> 포인트 클라우드 기초 (참고)
+        </h2>
+        <p class="mb-6 text-gray-700">이어지는 실습들을 위해 깊이 이미지(Depth Image)로부터 포인트 클라우드를 생성하는 기초 원리를 다룹니다. 카메라 내부 파라미터(Intrinsic)를 이용해 2D 픽셀 좌표와 깊이 값을 3D 공간 좌표로 변환합니다. 본 차시에서는 아래의 함수가 미리 정의되어 있다고 가정하고 실습을 진행합니다.</p>
+
+        <!-- 참고용 뼈대 코드 (숨김 없이 노출) -->
+        <div class="code-container bg-[#282c34] rounded-lg overflow-hidden text-sm mb-4">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><code class="language-python"># 깊이 이미지에서 포인트 클라우드를 생성하는 기본 함수 (참고용)
+def create_point_cloud_from_depth(depth_img, camera_matrix):
+    h, w = depth_img.shape
+    fx, fy = camera_matrix[0, 0], camera_matrix[1, 1]
+    cx, cy = camera_matrix[0, 2], camera_matrix[1, 2]
+    
+    # 픽셀 좌표 그리드 생성
+    u, v = np.meshgrid(np.arange(w), np.arange(h))
+    
+    # Z값(깊이)이 0보다 큰 유효한 픽셀만 추출
+    valid = depth_img > 0
+    z = depth_img[valid]
+    
+    # 핀홀 카메라 모델 역투영 수식: X = (u - cx) * Z / fx
+    x = (u[valid] - cx) * z / fx
+    y = (v[valid] - cy) * z / fy
+    
+    # (N, 3) 형태의 포인트 클라우드 배열 반환
+    points = np.vstack((x, y, z)).T
+    return points</code></pre>
+        </div>
+    </section>
+
+    <!-- Section 2 -->
+    <section class="mb-16">
+        <h2 class="text-2xl font-bold mb-4 flex items-center">
+            <span class="mr-2">2.</span> solvePnP를 활용한 자세 추정
+        </h2>
+        <p class="mb-6 text-gray-700">이전 차시에서 학습한 <strong>solvePnP</strong> 기법을 활용하여 60mm x 60mm x 100mm 크기의 나무 블록의 자세를 추정합니다. 육각형 형태의 실루엣에서 꼭짓점을 찾아내어 3D 공간 좌표와 매핑하는 것이 핵심입니다.</p>
+
+        <!-- 이론 설명 이미지 -->
+        <h4 class="font-bold mb-3 flex items-center text-gray-800"><span class="mr-2">📖</span> 이론 설명 (이전 차시 복습)</h4>
+        <div class="bg-[#f1f1ef] p-5 rounded-lg mb-6 text-sm text-gray-800">
+            solvePnP는 3D 모델의 실제 좌표와 대응하는 2D 이미지 픽셀 좌표 간의 관계를 통해 카메라 기준 객체의 회전(rvec)과 병진(tvec) 벡터를 구합니다. 이번 실습에서는 나무 블록의 외곽 형태(육각형)에서 기하학적 특징(소실점, 교차점)을 추론하여 대응점을 찾습니다.
+        </div>
+
+        <h3 class="font-bold mb-2 text-lg">📌 주요 함수 레퍼런스</h3>
+        <div class="overflow-x-auto mb-8 border rounded-lg border-gray-200">
+            <table class="min-w-full text-sm text-left text-gray-700">
+                <thead class="bg-gray-50 text-gray-900 font-semibold border-b border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 border-r">함수</th>
+                        <th class="px-4 py-3 border-r">역할</th>
+                        <th class="px-4 py-3 border-r">핵심 파라미터</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <tr>
+                        <td class="px-4 py-3 border-r font-mono text-blue-600">cv2.inRange()</td>
+                        <td class="px-4 py-3 border-r">특정 색상 영역 마스킹</td>
+                        <td class="px-4 py-3 border-r"><code>src, lowerb, upperb</code> (색상 하한/상한 배열)</td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 py-3 border-r font-mono text-blue-600">cv2.solvePnP()</td>
+                        <td class="px-4 py-3 border-r">객체 6D 자세 추정</td>
+                        <td class="px-4 py-3 border-r"><code>objectPoints, imagePoints, cameraMatrix, distCoeffs</code></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 실습 TODO 워크플로 -->
+        <div class="bg-white border border-gray-200 rounded-lg p-5 mb-6 shadow-sm">
+            <h4 class="font-bold text-lg mb-4 flex items-center"><span class="mr-2">📝</span> 실습 TODO 워크플로</h4>
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-[#37352f] text-white rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">1</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">히스토그램 기반 영역 추출 (TODO)</div>
+                    <span class="text-gray-500 text-sm">노란색 나무 영역을 <code>cv2.inRange()</code>로 마스킹하고 모폴로지 연산으로 노이즈를 지워 육각형 폴리곤을 구합니다.</span>
+                </div>
+            </div>
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-[#37352f] text-white rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">2</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">꼭짓점 정렬 (TODO)</div>
+                    <span class="text-gray-500 text-sm">추출된 육각형 실루엣의 꼭짓점을 기준점에 맞춰 시계방향으로 정렬합니다.</span>
+                </div>
+            </div>
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-[#37352f] text-white rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">3</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">소실점 산출 (TODO)</div>
+                    <span class="text-gray-500 text-sm">평행한 변들의 연장선이 만나는 교차점(소실점)을 기하학적으로 계산합니다.</span>
+                </div>
+            </div>
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-[#37352f] text-white rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">4</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">내부 꼭짓점 추론 (TODO)</div>
+                    <span class="text-gray-500 text-sm">소실점을 활용하여 가려진 블록의 내부 꼭짓점 위치를 추론합니다.</span>
+                </div>
+            </div>
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-[#37352f] text-white rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">5</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">3D-2D 매핑</div>
+                    <span class="text-gray-500 text-sm">2D 점의 위상에 대응하는 실제 3D 좌표 (60x60x100)를 할당합니다.</span>
+                </div>
+            </div>
+            <div class="flex items-start">
+                <div class="flex-shrink-0 w-8 h-8 bg-[#37352f] text-white rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">6</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">solvePnP 수행 (TODO)</div>
+                    <span class="text-gray-500 text-sm">매핑된 좌표들로 변환 행렬을 산출합니다.</span>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="font-bold mb-3 flex items-center text-gray-800"><span class="mr-2">✨</span> 예상 실행 결과</h4>
+        <div class="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg cursor-pointer mb-6 border border-gray-200 shadow-sm group" onclick="openLightbox(this)">
+            <img src="https://placehold.co/1920x1080/e8f4ec/1a5d38?text=Expected+Result:+Hexagon+Corners+%26+solvePnP+Axes" alt="예상 실행 결과" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        </div>
+
+        <!-- 뼈대 코드 -->
+        <details class="group bg-white border border-gray-200 rounded-lg shadow-sm mb-4">
+            <summary class="font-semibold p-4 cursor-pointer flex items-center hover:bg-gray-50 transition">
+                <svg class="w-5 h-5 mr-2 transition-transform duration-200 group-open:rotate-90 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+                💻 노트북 뼈대 코드 보기 (Colab 환경 참조용)
+            </summary>
+            <div class="p-4 border-t border-gray-200 bg-gray-50">
+                <div class="code-container bg-[#282c34] rounded-lg overflow-hidden text-sm">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code class="language-python"># 블록 이미지 로드 및 전처리
+img = cv2.imread('block.jpg')
+hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+# TODO 1: 히스토그램 기반으로 나무 블록(노란색) 육각형 영역 구하기
+# lower_yellow, upper_yellow를 설정하고 cv2.inRange 수행, 형태학적 변환으로 노이즈 제거
+mask = None 
+
+# TODO 2: 육각형 실루엣을 구성하는 꼭짓점 추출 및 시계방향 정렬
+# cv2.findContours 및 꼭짓점 근사화를 통해 6개의 점을 찾고 정렬하는 로직 구현
+corners_2d = None 
+
+# TODO 3: 소실점 산출 (마주보는 평행한 선분의 교차점 계산)
+vanishing_point = None
+
+# TODO 4: 내부 꼭짓점 추론
+# 보이는 꼭짓점과 소실점을 활용해 가려진 내부 점 좌표 계산
+inner_corner_2d = None
+
+# 5. 대응하는 3D 좌표 할당 (제공됨)
+# 블록 크기: 60 x 60 x 100
+obj_points = np.array([
+    [0, 0, 0], [60, 0, 0], [60, 60, 0], [0, 60, 0],  # 바닥면
+    [0, 0, 100], [60, 0, 100], [60, 60, 100], [0, 60, 100] # 윗면
+], dtype=np.float32)
+
+# 이미지 좌표(image_points) 리스트를 corners_2d와 inner_corner_2d를 합쳐 구성했다고 가정
+image_points = np.zeros((8, 2), dtype=np.float32)
+
+# TODO 6: solvePnP 수행
+camera_matrix = np.array([[800, 0, 320], [0, 800, 240], [0, 0, 1]], dtype=np.float32)
+dist_coeffs = np.zeros((4,1))
+# ret, rvec, tvec = cv2.solvePnP(...)
+</code></pre>
+                </div>
+            </div>
+        </details>
+
+        <!-- 정답 코드 -->
+        <details class="group bg-white border border-gray-200 rounded-lg shadow-sm">
+            <summary class="font-semibold p-4 cursor-pointer flex items-center hover:bg-gray-50 transition text-green-700">
+                <svg class="w-5 h-5 mr-2 transition-transform duration-200 group-open:rotate-90 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+                ✅ 정답 예시 확인하기
+            </summary>
+            <div class="p-4 border-t border-gray-200 bg-green-50">
+                <div class="code-container bg-[#282c34] rounded-lg overflow-hidden text-sm">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code class="language-python"># 1. 마스크 생성
+lower_yellow = np.array([20, 100, 100])
+upper_yellow = np.array([40, 255, 255])
+mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
+mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5,5), np.uint8))
+
+# 6. solvePnP
+# image_points가 올바르게 매핑되었다는 전제하에:
+# ret, rvec, tvec = cv2.solvePnP(obj_points, image_points, camera_matrix, dist_coeffs)
+# cv2.drawFrameAxes(img, camera_matrix, dist_coeffs, rvec, tvec, 50)</code></pre>
+                </div>
+            </div>
+        </details>
+    </section>
+
+    <!-- Section 3 -->
+    <section class="mb-16">
+        <h2 class="text-2xl font-bold mb-4 flex items-center">
+            <span class="mr-2">3.</span> ICP 정합 알고리즘으로 자세 구하기
+        </h2>
+        <p class="mb-6 text-gray-700">ICP(Iterative Closest Point) 정합 알고리즘을 이용해 관측된 포인트 클라우드를 정답 3D 모델에 정렬시켜 카메라 기준의 변환 행렬을 도출합니다.</p>
+
+        <!-- 이론 설명 이미지 -->
+        <h4 class="font-bold mb-3 flex items-center text-gray-800"><span class="mr-2">📖</span> 이론 설명</h4>
+        <div class="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg cursor-pointer mb-8 border border-gray-200 shadow-sm group" onclick="openLightbox(this)">
+            <img src="https://placehold.co/1920x1080/282c34/ffffff?text=Theory:+ICP+Registration+Algorithm" alt="ICP 알고리즘 원리" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        </div>
+
+        <h3 class="font-bold mb-2 text-lg">📌 주요 함수 레퍼런스</h3>
+        <div class="overflow-x-auto mb-8 border rounded-lg border-gray-200">
+            <table class="min-w-full text-sm text-left text-gray-700">
+                <thead class="bg-gray-50 text-gray-900 font-semibold border-b border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 border-r">함수</th>
+                        <th class="px-4 py-3 border-r">역할</th>
+                        <th class="px-4 py-3 border-r">공식 문서</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <tr>
+                        <td class="px-4 py-3 border-r font-mono text-blue-600">o3d.pipelines.registration.registration_icp</td>
+                        <td class="px-4 py-3 border-r">ICP 기반 포인트 클라우드 정합</td>
+                        <td class="px-4 py-3 text-center"><a href="#" class="text-blue-500 hover:underline">Link</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 실습 TODO 워크플로 -->
+        <div class="bg-white border border-gray-200 rounded-lg p-5 mb-6 shadow-sm">
+            <h4 class="font-bold text-lg mb-4 flex items-center"><span class="mr-2">📝</span> 실습 TODO 워크플로</h4>
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-gray-300 text-gray-700 rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">0~2</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">전처리 과정 (제공됨)</div>
+                    <span class="text-gray-500 text-sm">정답 모델 생성, 깊이 이미지에서 클라우드 계산, RANSAC 기반 배경(바닥) 평면 제거</span>
+                </div>
+            </div>
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-[#37352f] text-white rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">3-1</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">포인트 클라우드 군집화 (TODO)</div>
+                    <span class="text-gray-500 text-sm">— 배경이 제거된 구름에서 DBSCAN을 사용해 나무 블록만 군집화하여 추출합니다.</span>
+                </div>
+            </div>
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-[#37352f] text-white rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">3-2</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">주축(Principal Axis) 추정 (TODO)</div>
+                    <span class="text-gray-500 text-sm">— PCA를 이용해 추출된 나무 블록의 주축 벡터를 계산합니다.</span>
+                </div>
+            </div>
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-[#37352f] text-white rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">4-1</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">초기 정렬 매트릭스 생성 (TODO)</div>
+                    <span class="text-gray-500 text-sm">— 계산된 주축과 무게중심을 바탕으로 ICP의 초기값(init_transform)을 구성합니다.</span>
+                </div>
+            </div>
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-[#37352f] text-white rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">4-2</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">ICP 정합 실행 및 추출 (TODO)</div>
+                    <span class="text-gray-500 text-sm">— <code>registration_icp()</code> 함수를 실행하고 최종 회전/위치 값을 추출합니다.</span>
+                </div>
+            </div>
+            <div class="flex items-start">
+                <div class="flex-shrink-0 w-8 h-8 bg-gray-300 text-gray-700 rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">5</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">역투영 및 시각화 (제공됨)</div>
+                    <span class="text-gray-500 text-sm">구해진 축과 위치값을 RGB 이미지 상에 텍스트 및 축으로 투영해 그립니다.</span>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="font-bold mb-3 flex items-center text-gray-800"><span class="mr-2">✨</span> 예상 실행 결과</h4>
+        <div class="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg cursor-pointer mb-6 border border-gray-200 shadow-sm group" onclick="openLightbox(this)">
+            <img src="https://placehold.co/1920x1080/e8f4ec/1a5d38?text=Expected+Result:+ICP+Registration+Pose" alt="ICP 실행 결과" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        </div>
+
+        <details class="group bg-white border border-gray-200 rounded-lg shadow-sm mb-4">
+            <summary class="font-semibold p-4 cursor-pointer flex items-center hover:bg-gray-50 transition">
+                <svg class="w-5 h-5 mr-2 transition-transform duration-200 group-open:rotate-90 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+                💻 노트북 뼈대 코드 보기
+            </summary>
+            <div class="p-4 border-t border-gray-200 bg-gray-50">
+                <div class="code-container bg-[#282c34] rounded-lg overflow-hidden text-sm">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code class="language-python"># 0~2 단계 수행 완료된 포인트 클라우드: pcd_block
+# TODO 3-1: DBSCAN 알고리즘으로 클러스터링을 진행하고 가장 큰 군집만 남기기
+# labels = np.array(pcd_block.cluster_dbscan(...))
+# largest_cluster_pcd = ...
+
+# TODO 3-2: PCA 등으로 블록의 주축 구하기
+# center = largest_cluster_pcd.get_center()
+# cov = np.cov(np.asarray(largest_cluster_pcd.points).T)
+# eigenvalues, eigenvectors = np.linalg.eigh(cov)
+
+# TODO 4-1: 초기 변환 행렬 4x4 생성
+init_transform = np.eye(4)
+# 회전 부분 및 병진 부분 대입
+
+# TODO 4-2: ICP 함수 수행
+target_pcd = ... # 정답 3D 모델
+# reg_p2p = o3d.pipelines.registration.registration_icp(
+#     largest_cluster_pcd, target_pcd, max_correspondence_distance=0.02,
+#     init=init_transform,
+#     estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint()
+# )
+
+# TODO 4-3: 결과 변환 행렬 추출
+# final_transformation = reg_p2p.transformation
+</code></pre>
+                </div>
+            </div>
+        </details>
+    </section>
+
+    <!-- Section 4 -->
+    <section class="mb-16">
+        <h2 class="text-2xl font-bold mb-4 flex items-center">
+            <span class="mr-2">4.</span> Region Growing & RANSAC 기반 축/자세 추정
+        </h2>
+        <p class="mb-6 text-gray-700">이번에는 객체를 구성하는 평면들의 정보를 바탕으로 축을 계산합니다. Region Growing으로 큰 면들을 분할하고, RANSAC으로 수식을 구하여 교선(축)을 도출합니다.</p>
+
+        <h4 class="font-bold mb-3 flex items-center text-gray-800"><span class="mr-2">📖</span> 이론 설명</h4>
+        <div class="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg cursor-pointer mb-8 border border-gray-200 shadow-sm group" onclick="openLightbox(this)">
+            <img src="https://placehold.co/1920x1080/282c34/ffffff?text=Theory:+Region+Growing+%26+RANSAC" alt="Region Growing 이론" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-lg p-5 mb-6 shadow-sm">
+            <h4 class="font-bold text-lg mb-4 flex items-center"><span class="mr-2">📝</span> 실습 TODO 워크플로</h4>
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-[#37352f] text-white rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">1-1</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">Region Growing 면 분할 (TODO)</div>
+                    <span class="text-gray-500 text-sm">— 법선(Normal) 각도 차이를 기준으로 점들을 병합하여 가장 큰 3개의 면 클러스터를 찾습니다.</span>
+                </div>
+            </div>
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-[#37352f] text-white rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">2-1</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">RANSAC 평면 피팅 (TODO)</div>
+                    <span class="text-gray-500 text-sm">— 분할된 3개의 면 각각에 대해 RANSAC을 적용하여 평면의 방정식(a,b,c,d)을 도출합니다.</span>
+                </div>
+            </div>
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-gray-300 text-gray-700 rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">3~5</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">축 교선 도출 및 직교성 보정, 역투영 (제공됨)</div>
+                    <span class="text-gray-500 text-sm">구해진 평면들 간의 외적을 통해 축 벡터를 추출하고 역투영하여 확인합니다.</span>
+                </div>
+            </div>
+        </div>
+
+        <details class="group bg-white border border-gray-200 rounded-lg shadow-sm mb-4">
+            <summary class="font-semibold p-4 cursor-pointer flex items-center hover:bg-gray-50 transition">
+                <svg class="w-5 h-5 mr-2 transition-transform duration-200 group-open:rotate-90 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+                💻 노트북 뼈대 코드 보기
+            </summary>
+            <div class="p-4 border-t border-gray-200 bg-gray-50">
+                <div class="code-container bg-[#282c34] rounded-lg overflow-hidden text-sm">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code class="language-python"># pcd_block: 배경이 제거된 나무 블록 포인트 클라우드
+
+# TODO 1-1: 법선 계산 및 Region Growing으로 3개 면 분리
+# pcd_block.estimate_normals(...)
+# 힌트: 법선 벡터의 유사도(내적)를 기반으로 군집화 수행
+planes = [] # 3개의 포인트 클라우드 군집 저장 리스트
+
+# TODO 2-1: 3개의 면 각각에 RANSAC 수행
+plane_models = []
+for plane_pcd in planes:
+    # plane_model, inliers = plane_pcd.segment_plane(distance_threshold=0.01, ransac_n=3, num_iterations=1000)
+    # plane_models.append(plane_model)
+    pass
+</code></pre>
+                </div>
+            </div>
+        </details>
+    </section>
+
+    <div class="divider-text">심화 학습 ─ 시스템 캘리브레이션</div>
+
+    <!-- Section 5 -->
+    <section class="mb-16">
+        <h2 class="text-2xl font-bold mb-4 flex items-center">
+            <span class="mr-2">5.</span> 로봇-카메라 좌표계 이해 (Hand-Eye Calibration)
+        </h2>
+        <p class="mb-6 text-gray-700">로봇의 움직임과 카메라 관측 결과 사이의 관계를 수학적으로 정의하여, 카메라 좌표계와 로봇 좌표계를 일치시키는 캘리브레이션 과정을 실습합니다.</p>
+
+        <h4 class="font-bold mb-3 flex items-center text-gray-800"><span class="mr-2">📖</span> 이론 설명</h4>
+        <div class="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg cursor-pointer mb-6 border border-gray-200 shadow-sm group" onclick="openLightbox(this)">
+            <img src="https://placehold.co/1920x1080/282c34/ffffff?text=Theory:+Eye-to-Hand+vs+Eye-in-Hand" alt="두 구성 시스템 그림" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div class="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg cursor-pointer border border-gray-200 shadow-sm group" onclick="openLightbox(this)">
+                <img src="https://placehold.co/1920x1080/282c34/ffffff?text=Theory:+Eye-in-Hand+Solution" alt="Eye-in-Hand 솔루션 수식" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+            </div>
+            <div class="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg cursor-pointer border border-gray-200 shadow-sm group" onclick="openLightbox(this)">
+                <img src="https://placehold.co/1920x1080/282c34/ffffff?text=Theory:+Eye-to-Hand+Solution" alt="Eye-to-Hand 솔루션 수식" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+            </div>
+        </div>
+
+        <div class="bg-[#f1f1ef] p-5 rounded-lg mb-6 text-sm text-gray-800">
+            <h4 class="font-bold text-base mb-3 border-b pb-2 border-gray-300">📚 캘리브레이션 수식(AX=XB)의 의미</h4>
+            <ul class="list-disc list-inside space-y-2">
+                <li>카메라가 로봇 팔 끝에 부착된 <strong>Eye-in-Hand</strong> 시스템의 경우, 고정된 환경(체스보드 등)을 다각도에서 촬영합니다.</li>
+                <li>로봇의 이동(A)과 카메라가 바라본 타겟의 상대적 이동(B) 간의 루프를 닫아줌으로써, 센서와 로봇 플랜지 사이의 고정된 변환 행렬(X)을 수치 최적화로 구합니다.</li>
+            </ul>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-lg p-5 mb-6 shadow-sm">
+            <h4 class="font-bold text-lg mb-4 flex items-center"><span class="mr-2">📝</span> 실습 TODO 워크플로</h4>
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-gray-300 text-gray-700 rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">1</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">데이터 로드 (제공됨)</div>
+                    <span class="text-gray-500 text-sm">촬영된 10장의 체스보드 이미지와 로봇의 TCP 좌표가 기록된 CSV를 불러옵니다.</span>
+                </div>
+            </div>
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-[#37352f] text-white rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">2</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">카메라-타겟 자세 추정 (TODO)</div>
+                    <span class="text-gray-500 text-sm">— 체스보드 코너 검출 후 <code>solvePnP</code>를 통해 R_target2cam, t_target2cam 리스트를 구축합니다.</span>
+                </div>
+            </div>
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-[#37352f] text-white rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">3</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">로봇 베이스-그리퍼 자세 추출 (TODO)</div>
+                    <span class="text-gray-500 text-sm">— CSV 데이터를 파싱하여 R_gripper2base, t_gripper2base 리스트를 구축합니다.</span>
+                </div>
+            </div>
+            <div class="flex items-start mb-4">
+                <div class="flex-shrink-0 w-8 h-8 bg-[#37352f] text-white rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">4</div>
+                <div>
+                    <div class="font-bold text-[#37352f] mb-1">Calibrate Hand-Eye 실행 (TODO)</div>
+                    <span class="text-gray-500 text-sm">— <code>cv2.calibrateHandEye</code> 함수에 매개변수를 올바르게 입력하여 실행합니다.</span>
+                </div>
+            </div>
+        </div>
+
+        <details class="group bg-white border border-gray-200 rounded-lg shadow-sm mb-4">
+            <summary class="font-semibold p-4 cursor-pointer flex items-center hover:bg-gray-50 transition">
+                <svg class="w-5 h-5 mr-2 transition-transform duration-200 group-open:rotate-90 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+                💻 노트북 뼈대 코드 보기
+            </summary>
+            <div class="p-4 border-t border-gray-200 bg-gray-50">
+                <div class="code-container bg-[#282c34] rounded-lg overflow-hidden text-sm">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <pre><code class="language-python"># 데이터 저장을 위한 빈 리스트
+R_gripper2base, t_gripper2base = [], []
+R_target2cam, t_target2cam = [], []
+
+# 반복문을 돌며 데이터 채우기 (이미지 10장)
+for i in range(10):
+    # TODO 2: 이미지에서 코너 찾고 solvePnP 계산
+    # ret, rvec, tvec = cv2.solvePnP(...)
+    # R_cam, _ = cv2.Rodrigues(rvec)
+    # R_target2cam.append(R_cam); t_target2cam.append(tvec)
+    
+    # TODO 3: CSV에서 해당 인덱스의 로봇 TCP(R, t) 로드 및 변환 후 저장
+    # R_grip = ...; t_grip = ...
+    # R_gripper2base.append(R_grip); t_gripper2base.append(t_grip)
+    pass
+
+# TODO 4: cv2.calibrateHandEye 함수 호출 (인자 채우기)
+# R_cam2gripper, t_cam2gripper = cv2.calibrateHandEye(
+#     R_gripper2base=TODO, 
+#     t_gripper2base=TODO, 
+#     R_target2cam=TODO, 
+#     t_target2cam=TODO,
+#     method=cv2.CALIB_HAND_EYE_TSAI
+# )
+
+# 결과 출력 (동차 변환 행렬 구성)
+# if R_cam2gripper is not None:
+#     T_cam2gripper = np.eye(4)
+#     T_cam2gripper[:3, :3] = R_cam2gripper
+#     T_cam2gripper[:3, 3] = t_cam2gripper.reshape(3)
+#     print("카메라에서 그리퍼로의 변환 행렬:\n", T_cam2gripper)</code></pre>
+                </div>
+            </div>
+        </details>
+    </section>
+
+    <!-- Footer Check -->
+    <footer class="mt-16 pt-8 border-t border-gray-200">
+        <div class="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+            <div class="text-3xl mb-2">🎉</div>
+            <h3 class="font-bold text-green-900 text-lg mb-2">수고하셨습니다!</h3>
+            <p class="text-green-800 text-sm mb-4">
+                모든 기본 실습 코드를 실행하고 이해하셨다면 체크 후 다음 차시로 이동하세요.
+            </p>
+            <div class="flex justify-center items-center mb-4">
+                <label class="flex items-center space-x-2 text-green-900 font-semibold cursor-pointer">
+                    <input type="checkbox" class="w-5 h-5 accent-green-600" id="finish-check" onchange="toggleNextBtn()">
+                    <span>Day 1 — 2차시 실습 완료</span>
+                </label>
+            </div>
+            <button id="next-btn" class="bg-gray-300 text-gray-500 font-bold py-2 px-6 rounded opacity-50 cursor-not-allowed transition" disabled onclick="location.href='https://bkyb.github.io/lacture-pages/day-2/'">
+                다음 학습 진행하기 ➔
+            </button>
+        </div>
+    </footer>
+
+    <!-- JavaScript for Interactions -->
+    <script>
+        function copyCode(button) {
+            const codeBlock = button.nextElementSibling.querySelector('code');
+            const codeText = codeBlock.innerText;
+            
+            navigator.clipboard.writeText(codeText).then(() => {
+                const originalText = button.innerText;
+                button.innerText = 'Copied!';
+                button.classList.add('bg-green-600', 'text-white');
+                
+                setTimeout(() => {
+                    button.innerText = originalText;
+                    button.classList.remove('bg-green-600', 'text-white');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+
+        function toggleNextBtn() {
+            const checkbox = document.getElementById('finish-check');
+            const nextBtn = document.getElementById('next-btn');
+            
+            if (checkbox.checked) {
+                nextBtn.disabled = false;
+                nextBtn.classList.remove('bg-gray-300', 'text-gray-500', 'opacity-50', 'cursor-not-allowed');
+                nextBtn.classList.add('bg-green-600', 'text-white', 'hover:bg-green-700', 'shadow-md');
+            } else {
+                nextBtn.disabled = true;
+                nextBtn.classList.add('bg-gray-300', 'text-gray-500', 'opacity-50', 'cursor-not-allowed');
+                nextBtn.classList.remove('bg-green-600', 'text-white', 'hover:bg-green-700', 'shadow-md');
+            }
+        }
+
+        let currentImageIndex = 0;
+        let galleryImages = [];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const imgs = document.querySelectorAll('img.gallery-target');
+            imgs.forEach((img, idx) => {
+                galleryImages.push(img.src);
+                img.parentElement.onclick = () => openLightbox(idx);
+            });
+        });
+
+        function openLightbox(index) {
+            currentImageIndex = index;
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            const lightboxCounter = document.getElementById('lightbox-counter');
+            
+            lightboxImg.src = galleryImages[index];
+            lightboxCounter.innerText = `${index + 1} / ${galleryImages.length}`;
+            
+            lightbox.classList.remove('hidden');
+            void lightbox.offsetWidth; 
+            lightbox.classList.remove('opacity-0');
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('lightbox');
+            lightbox.classList.add('opacity-0');
+            setTimeout(() => {
+                lightbox.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 200); 
+        }
+
+        function changeLightboxImage(step, event) {
+            if(event) event.stopPropagation();
+
+            currentImageIndex += step;
+            if (currentImageIndex < 0) currentImageIndex = galleryImages.length - 1;
+            if (currentImageIndex >= galleryImages.length) currentImageIndex = 0;
+            
+            document.getElementById('lightbox-img').src = galleryImages[currentImageIndex];
+            document.getElementById('lightbox-counter').innerText = `${currentImageIndex + 1} / ${galleryImages.length}`;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const lightbox = document.getElementById('lightbox');
+            if (!lightbox.classList.contains('hidden')) {
+                if (e.key === 'Escape') closeLightbox();
+                if (e.key === 'ArrowLeft') changeLightboxImage(-1, null);
+                if (e.key === 'ArrowRight') changeLightboxImage(1, null);
+            }
+        });
+    </script>
+
+    <!-- 라이트박스 UI 컨테이너 -->
+    <div id="lightbox" class="fixed inset-0 z-50 hidden opacity-0 lightbox-fade bg-black/95 flex flex-col justify-center items-center" onclick="closeLightbox()">
+        <button class="absolute top-6 right-6 text-white text-3xl font-light hover:text-gray-300 z-50 p-2" onclick="closeLightbox()">&times;</button>
+        <div class="relative w-full max-w-6xl px-4 flex justify-center items-center" onclick="event.stopPropagation()">
+            <div class="aspect-video w-full bg-black flex items-center justify-center shadow-2xl relative">
+                <img id="lightbox-img" src="" alt="확대 이미지" class="max-w-full max-h-full object-contain">
+            </div>
+        </div>
+        <div class="absolute bottom-8 flex items-center space-x-6 text-white" onclick="event.stopPropagation()">
+            <button onclick="changeLightboxImage(-1, event)" class="bg-gray-800 hover:bg-gray-700 border border-gray-600 px-4 py-2 rounded text-sm transition">‹ 이전</button>
+            <span id="lightbox-counter" class="text-sm font-mono tracking-widest text-gray-400">1 / 5</span>
+            <button onclick="changeLightboxImage(1, event)" class="bg-gray-800 hover:bg-gray-700 border border-gray-600 px-4 py-2 rounded text-sm transition">다음 ›</button>
+        </div>
+        <div class="absolute bottom-2 text-xs text-gray-500 font-mono text-center w-full">
+            ESC / 바깥 클릭으로 닫기 · ← → 키로 이동
+        </div>
+    </div>
+</body>
+</html>
