@@ -699,7 +699,7 @@ ros2 run manipulator_practice_python data_player --ros-args -p directory_path:="
 ros2 run manipulator_practice_python pose_hip 
 
 # Tip: rqt를 통해 /pose/visualized_image 토픽을 확인하여 픽셀 좌표 검출을 모니터링하세요.
-rqt</code></pre>
+ros2 run rqt_image_view rqt_image_view /pose/visualized_image</code></pre>
         </div>
 
         <h4 class="font-bold mb-3 flex items-center text-gray-800"><span class="mr-2">👀</span> 실습 준비 실행 결과</h4>
@@ -783,6 +783,13 @@ rqt</code></pre>
                     </span>
                 </div>
             </div>
+        </div>
+
+        <h4 class="font-bold mb-3 flex items-center text-gray-800"><span class="mr-2">▶️</span> 실행 및 결과 확인</h4>
+        <div class="code-container bg-[#282c34] rounded-lg overflow-hidden text-sm mb-4">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><code class="language-bash"># 코드 완성 후에 실행합니다.
+ros2 run manipulator_practice_python dynamic_obstacle_node </code></pre>
         </div>
 
         <h4 class="font-bold mb-3 flex items-center text-gray-800"><span class="mr-2">✨</span> 예상 실행 결과</h4>
