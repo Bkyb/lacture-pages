@@ -233,37 +233,12 @@ ros2 pkg list | grep moveit</code></pre>
             </div>
         </div>
 
-        <h4 class="font-bold mb-3 flex items-center text-gray-800"><span class="mr-2">✨</span> 예상 실행 결과</h4>
-        <div class="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg cursor-pointer mb-6 border border-gray-200 shadow-sm group" onclick="openLightbox(this)">
-            <img src="https://placehold.co/1920x1080/e8f4ec/1a5d38?text=Expected+Result:+Robot+Moving+Linear+Trajectory" alt="로봇 선형 궤적 이동" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        <div class="code-container bg-[#282c34] rounded-lg overflow-hidden my-4 shadow-sm text-sm">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><code class="language-bash"># 두산로봇 가상 모드 실행(터미널)
+ros2 launch dsr_bringup2 dsr_bringup2_rviz.launch.py mode:=virtual model:=m1013 gui:=true
+            </code></pre>
         </div>
-
-        <!-- 뼈대 코드 -->
-        <details class="group bg-white border border-gray-200 rounded-lg shadow-sm mb-4">
-            <summary class="font-semibold p-4 cursor-pointer flex items-center hover:bg-gray-50 transition">
-                <svg class="w-5 h-5 mr-2 transition-transform duration-200 group-open:rotate-90 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-                💻 터미널 뼈대 코드 보기
-            </summary>
-            <div class="p-4 border-t border-gray-200 bg-gray-50">
-                <div class="code-container bg-[#282c34] rounded-lg overflow-hidden text-sm">
-                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <pre><code class="language-bash"># TODO: dsr_msgs2/srv/MoveLine 에 맞추어 빈 값들을 채워넣으세요.
-ros2 service call /dsr01/motion/move_line dsr_msgs2/srv/MoveLine '{
-  pos: [TODO, TODO, TODO, TODO, TODO, TODO],
-  vel: [TODO, TODO],
-  acc: [TODO, TODO],
-  time: 0.0,
-  radius: 0.0,
-  ref: 0,
-  mode: 0,
-  blend_type: 0,
-  sync_type: 0
-}'</code></pre>
-                </div>
-            </div>
-        </details>
 
         <!-- 정답 코드 -->
         <details class="group bg-white border border-gray-200 rounded-lg shadow-sm">
@@ -375,6 +350,21 @@ ros2 service call /dsr01/motion/move_line dsr_msgs2/srv/MoveLine '{
         <h4 class="font-bold mb-3 flex items-center text-gray-800"><span class="mr-2">✨</span> 예상 실행 결과</h4>
         <div class="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg cursor-pointer mb-6 border border-gray-200 shadow-sm group" onclick="openLightbox(this)">
             <img src="https://placehold.co/1920x1080/e8f4ec/1a5d38?text=Expected+Result:+MoveIt+Motion+Planning+Success" alt="MoveIt 모션 플래닝 성공" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        </div>
+
+        <div class="code-container bg-[#282c34] rounded-lg overflow-hidden my-4 shadow-sm text-sm">
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            <pre><code class="language-bash"># 두산로봇 가상 모드 실행(터미널)
+ros2 launch dsr_bringup2 dsr_bringup2_rviz.launch.py mode:=virtual model:=m1013 gui:=true
+ros2 launch manipulator_practice_python system_bringup.launch.py 
+
+# 별도의 창을 열어서 아래 게이트웨이 실행
+ros2 run manipulator_practice_python gateway 
+
+# 별도의 창을 열어서 아래 서비스 호출
+# 4x4 Homogeneous Transformation Matrix 입력 아래는 예시.
+ros2 service call /move_to_pose manipulator_practice_cpp/srv/MoveToPose "{pose_matrix: [-0.018947423, -0.99825805, -0.055873353, 0.0676016, -0.9993851, 0.017260587, 0.030519957, 0.670393, -0.029502386, 0.05641727, -0.9979713, 0.209476, 0.0, 0.0, 0.0, 1.0]}"  
+            </code></pre>
         </div>
 
         <details class="group bg-white border border-gray-200 rounded-lg shadow-sm mb-4">
