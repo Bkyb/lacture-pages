@@ -188,6 +188,12 @@
         <div class="bg-[#f1f1ef] p-5 rounded-lg mb-6 text-sm text-gray-800">
             <strong>Occupancy Grid (점유 격자 맵)</strong>은 로봇 주변의 3차원 공간을 일정한 크기의 큐브(Voxel)로 나누고, 각 공간에 장애물이 존재할 확률(Occupied, Free, Unknown)을 표현하는 방식입니다. <br><br>
             <strong>OctoMap</strong>은 이러한 점유 격자를 효율적으로 관리하기 위해 8진 트리(Octree) 구조를 사용하는 프레임워크입니다. 공간에 데이터가 있는 부분만 세분화하여 메모리를 획기적으로 절약하며, 카메라의 Depth 정보나 라이다의 Point Cloud를 누적하여 3D 맵을 생성합니다.
+            <div class="mt-3 pt-3 border-t border-gray-300">
+                <a href="https://docs.ros.org/en/humble/p/octomap/" target="_blank" class="text-blue-600 hover:underline flex items-center w-fit">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    OctoMap ROS2 공식 레퍼런스
+                </a>
+            </div>
         </div>
 
         <div class="bg-white border border-gray-200 rounded-lg p-5 mb-6 shadow-sm">
@@ -724,7 +730,12 @@ rqt</code></pre>
                         <td class="px-4 py-3 border-r"><code>src, m</code> (src는 (N, 1, 2) 형태 요구)</td>
                     </tr>
                     <tr>
-                        <td class="px-4 py-3 border-r font-mono text-blue-600">visualization_msgs.msg.Marker</td>
+                        <td class="px-4 py-3 border-r font-mono text-blue-600">
+                            <a href="https://docs.ros.org/en/humble/Tutorials/Intermediate/RViz/Marker-Display-types/Marker-Display-types.html" target="_blank" class="hover:underline flex items-center text-blue-600">
+                                visualization_msgs.msg.Marker
+                                <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                            </a>
+                        </td>
                         <td class="px-4 py-3 border-r">RViz 상에 3D 도형(마커)을 그리기 위한 메시지 타입</td>
                         <td class="px-4 py-3 border-r">
                             <code>type</code> (도형 형태: 실린더 등)<br>
@@ -768,6 +779,7 @@ rqt</code></pre>
                     <div class="font-bold text-[#37352f] mb-1">마커 발행 및 시각화 (TODO 4)</div>
                     <span class="text-gray-500 text-sm">계산된 좌표를 기반으로 <code>visualization_msgs/Marker</code>(원기둥)를 구성하여 RViz에 퍼블리시합니다.
                         <br><b class="text-[#2383e2]">[조건]</b> 모양: 원기둥 (Marker.CYLINDER), Z축 중심 위치: 0.15m, 지름: 600mm(0.6m), 높이: 1700mm(1.7m), 색상: 빨간색(R:1.0) 반투명(A:0.6)
+                        <br><a href="https://docs.ros.org/en/humble/Tutorials/Intermediate/RViz/Marker-Display-types/Marker-Display-types.html" target="_blank" class="text-blue-500 hover:underline mt-1 inline-flex items-center">🔗 RViz Marker Display Types 공식 문서 참고하기</a>
                     </span>
                 </div>
             </div>
