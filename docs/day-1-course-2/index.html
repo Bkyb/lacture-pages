@@ -129,7 +129,7 @@
             <h3 class="font-bold mb-2">이번 차시가 끝나면 할 수 있는 것:</h3>
             <ul class="list-disc list-inside space-y-1 text-sm text-gray-700">
                 <li>3차원 좌표계에서의 객체 자세(카메라 기준)를 추정하는 다양한 원리를 이해한다.</li>
-                <li>solvePnP, ICP 정합, RANSAC 기반 알고리즘을 구현하여 객체의 6D 자세를 계산할 수 있다.</li>
+                <li>solvePnP, ICP 정합 알고리즘을 구현하여 객체의 6D 자세를 계산할 수 있다.</li>
                 <li>로봇 비전 시스템 좌표계 (Eye-to-Hand, Eye-in-Hand)의 구조를 이해한다.</li>
                 <li>Hand-Eye 캘리브레이션을 수행하여 로봇과 카메라 간의 변환 행렬을 도출할 수 있다.</li>
             </ul>
@@ -141,7 +141,7 @@
         <div class="text-xl mr-3">🔗</div>
         <div class="text-sm">
             <span class="font-semibold text-green-800 mr-2">Colab 실습 링크:</span>
-            <a href="#" class="text-green-700 underline hover:text-green-900 transition-colors">실습 파일 열기 (새 창)</a>
+            <a href="https://colab.research.google.com/drive/1c36D2ySyricmU8UPJjwmXjc-wDGVQc67?usp=sharing" class="text-green-700 underline hover:text-green-900 transition-colors">실습 파일 열기 (새 창)</a>
         </div>
     </div>
 
@@ -162,10 +162,6 @@
             </div>
         </div>
 
-        <button class="bg-blue-500 text-white px-4 py-2 rounded text-sm font-semibold hover:bg-blue-600 transition shadow-sm mb-4" onclick="alert('가상 데이터셋 다운로드가 완료되었습니다.')">
-            실습용 샘플 데이터셋 다운로드
-        </button>
-
         <div class="code-container bg-[#282c34] rounded-lg overflow-hidden my-4 shadow-sm text-sm">
             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
             <pre><code class="language-python"># Open3D 설치 및 필요 라이브러리 임포트 (Colab 셀 실행)
@@ -178,7 +174,9 @@ import open3d as o3d
 
 # 버전 확인
 print(f"OpenCV version: {cv2.__version__}")
-print(f"Open3D version: {o3d.__version__}")</code></pre>
+print(f"Open3D version: {o3d.__version__}")
+
+!wget -O block_rgb.png https://raw.githubusercontent.com/bkyb/lacture-pages/main/data/block_rgb.png</code></pre>
         </div>
     </section>
 
@@ -191,6 +189,12 @@ print(f"Open3D version: {o3d.__version__}")</code></pre>
         </h2>
         <p class="mb-6 text-gray-700">이어지는 실습들을 위해 깊이 이미지(Depth Image)로부터 포인트 클라우드를 생성하는 기초 원리를 다룹니다. 카메라 내부 파라미터(Intrinsic)를 이용해 2D 픽셀 좌표와 깊이 값을 3D 공간 좌표로 변환합니다. 본 차시에서는 아래의 함수가 미리 정의되어 있다고 가정하고 실습을 진행합니다.</p>
 
+        <!-- 이론 설명 이미지 -->
+        <h4 class="font-bold mb-3 flex items-center text-gray-800"><span class="mr-2">📖</span> 이론 설명</h4>
+        <div class="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg cursor-pointer mb-8 border border-gray-200 shadow-sm group" onclick="openLightbox(this)">
+            <img src="./images/슬라이드1.JPG" alt="ICP 알고리즘 원리" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        </div>
+        
         <!-- 참고용 뼈대 코드 (숨김 없이 노출) -->
         <div class="code-container bg-[#282c34] rounded-lg overflow-hidden text-sm mb-4">
             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
@@ -204,7 +208,7 @@ def create_point_cloud_from_depth(depth_img, camera_matrix):
     u, v = np.meshgrid(np.arange(w), np.arange(h))
     
     # Z값(깊이)이 0보다 큰 유효한 픽셀만 추출
-    valid = depth_img > 0
+    valid = depth_img &gt; 0
     z = depth_img[valid]
     
     # 핀홀 카메라 모델 역투영 수식: X = (u - cx) * Z / fx
@@ -304,7 +308,7 @@ def create_point_cloud_from_depth(depth_img, camera_matrix):
 
         <h4 class="font-bold mb-3 flex items-center text-gray-800"><span class="mr-2">✨</span> 예상 실행 결과</h4>
         <div class="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg cursor-pointer mb-6 border border-gray-200 shadow-sm group" onclick="openLightbox(this)">
-            <img src="https://placehold.co/1920x1080/e8f4ec/1a5d38?text=Expected+Result:+Hexagon+Corners+%26+solvePnP+Axes" alt="예상 실행 결과" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+            <img src="./images/슬라이드2.JPG" alt="예상 실행 결과" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
         </div>
 
         <!-- 뼈대 코드 -->
@@ -318,40 +322,150 @@ def create_point_cloud_from_depth(depth_img, camera_matrix):
             <div class="p-4 border-t border-gray-200 bg-gray-50">
                 <div class="code-container bg-[#282c34] rounded-lg overflow-hidden text-sm">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <pre><code class="language-python"># 블록 이미지 로드 및 전처리
-img = cv2.imread('block.jpg')
+                    <pre><code class="language-python">def get_line_intersection(p1, p2, p3, p4):
+    """
+    두 선분 (p1-p2), (p3-p4)의 무한 연장선 교차점(소실점)을 반환합니다.
+    """
+    x1, y1 = p1; x2, y2 = p2
+    x3, y3 = p3; x4, y4 = p4
+
+    denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+    if denom == 0: 
+        return None # 평행할 경우
+    
+    px = ((x1*y2 - y1*x2)*(x3 - x4) - (x1 - x2)*(x3*y4 - y3*x4)) / denom
+    py = ((x1*y2 - y1*x2)*(y3 - y4) - (y1 - y2)*(x3*y4 - y3*x4)) / denom
+    return np.array([px, py], dtype=np.float32)
+
+# ==========================================
+# 0. 블록 이미지 로드
+# ==========================================
+img = cv2.imread('block_rgb.png')
+if img is None:
+    raise ValueError("block_rgb.png 이미지를 찾을 수 없습니다. 코랩에 업로드했는지 확인하세요.")
+
+img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-# TODO 1: 히스토그램 기반으로 나무 블록(노란색) 육각형 영역 구하기
-# lower_yellow, upper_yellow를 설정하고 cv2.inRange 수행, 형태학적 변환으로 노이즈 제거
-mask = None 
+# ==========================================
+# TODO 1: 히스토그램 기반 마스크 생성
+# ==========================================
+# 나무 블록을 추출하기 위한 HSV 범위를 설정하고 마스크를 생성하세요.
+lower_yellow = None  # 예: np.array([10, 60, 60])
+upper_yellow = None  
+mask = None          # cv2.inRange(...) 사용
 
-# TODO 2: 육각형 실루엣을 구성하는 꼭짓점 추출 및 시계방향 정렬
-# cv2.findContours 및 꼭짓점 근사화를 통해 6개의 점을 찾고 정렬하는 로직 구현
-corners_2d = None 
+# 형태학적 변환 (마스크 생성 로직 구현 후 아래 주석을 해제하세요)
+# kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+# mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+# mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
-# TODO 3: 소실점 산출 (마주보는 평행한 선분의 교차점 계산)
-vanishing_point = None
+# ==========================================
+# TODO 2: 육각형 실루엣 구성 및 꼭짓점 정렬
+# ==========================================
+# cv2.findContours를 사용해 외곽선을 찾고, cv2.approxPolyDP로 6개의 꼭짓점을 추출하세요.
+# 추출한 꼭짓점을 시계 방향으로 정렬하고, 가장 상단(y값이 최소)인 점이 배열의 0번 인덱스(p0)가 되도록 만드세요.
+corners_2d = None
 
+# ==========================================
+# TODO 3: 소실점(Vanishing Point) 산출
+# ==========================================
+# 육각형의 마주보는 평행한 선분들의 연장선 교차점을 통해 3개의 소실점을 구하세요.
+vp1 = None  # get_line_intersection 활용
+vp2 = None
+vp3 = None
+
+# ==========================================
 # TODO 4: 내부 꼭짓점 추론
-# 보이는 꼭짓점과 소실점을 활용해 가려진 내부 점 좌표 계산
-inner_corner_2d = None
+# ==========================================
+# 보이는 Y-junction(inner_vis)과 가려진 꼭짓점(inner_hid)을 소실점을 활용해 추론하세요.
+inner_vis = None
+inner_hid = None
 
-# 5. 대응하는 3D 좌표 할당 (제공됨)
-# 블록 크기: 60 x 60 x 100
+# ==========================================
+# TODO 5: 2D-3D 좌표 매핑
+# ==========================================
+# 블록 크기: 60mm x 60mm x 100mm
 obj_points = np.array([
-    [0, 0, 0], [60, 0, 0], [60, 60, 0], [0, 60, 0],  # 바닥면
-    [0, 0, 100], [60, 0, 100], [60, 60, 100], [0, 60, 100] # 윗면
+    [0, 0, 0], [60, 0, 0], [60, 60, 0], [0, 60, 0],   # 바닥면 
+    [0, 0, 100], [60, 0, 100], [60, 60, 100], [0, 60, 100] # 윗면 
 ], dtype=np.float32)
 
-# 이미지 좌표(image_points) 리스트를 corners_2d와 inner_corner_2d를 합쳐 구성했다고 가정
-image_points = np.zeros((8, 2), dtype=np.float32)
+# 위에서 구한 2D 좌표들(corners_2d, inner_hid, inner_vis)을 
+# obj_points의 인덱스 순서에 맞게 (8, 2) 형태의 배열로 묶으세요.
+image_points = None
 
-# TODO 6: solvePnP 수행
+# ==========================================
+# TODO 6: solvePnP 수행 및 축/정보 출력
+# ==========================================
 camera_matrix = np.array([[800, 0, 320], [0, 800, 240], [0, 0, 1]], dtype=np.float32)
 dist_coeffs = np.zeros((4,1))
-# ret, rvec, tvec = cv2.solvePnP(...)
-</code></pre>
+
+# 1. cv2.solvePnP를 이용해 회전 벡터(rvec)와 병진 벡터(tvec)를 구하세요.
+rvec = None
+tvec = None
+
+# 2. tvec를 이용해 카메라와 객체 사이의 직선 거리를 계산하세요. (np.linalg.norm 활용)
+distance = None
+
+# 3. cv2.Rodrigues와 cv2.decomposeProjectionMatrix를 활용해 rvec를 Euler Angle(Pitch, Yaw, Roll)로 변환하세요.
+pitch, yaw, roll = None, None, None
+
+# ==========================================
+# 7. 결과 시각화 파이프라인 (수정 금지)
+# ==========================================
+# TODO를 모두 완성하면 아래 코드가 실행되며 4개의 시각화 결과와 포즈 정보가 출력됩니다.
+if all(v is not None for v in [mask, corners_2d, inner_vis, inner_hid, rvec, tvec]):
+    print(f"=== 3D Pose Estimation Results ===")
+    print(f"Distance : {distance:.2f} mm")
+    print(f"Pose (Pitch, Yaw, Roll): {pitch:.2f}°, {yaw:.2f}°, {roll:.2f}°")
+    print(f"==================================")
+
+    fig, axs = plt.subplots(2, 2, figsize=(14, 12))
+
+    # [1] HSV Masking
+    axs[0, 0].imshow(img_rgb)
+    axs[0, 0].imshow(mask, alpha=0.4, cmap='jet')
+    axs[0, 0].set_title('1. HSV Masking')
+    axs[0, 0].axis('off')
+
+    # [2] 2D 꼭짓점 추출
+    img_pts = img_rgb.copy()
+    for i, pt in enumerate(corners_2d):
+        cv2.circle(img_pts, tuple(pt.astype(int)), 5, (255, 0, 0), -1)
+        cv2.putText(img_pts, f"p{i}", tuple(pt.astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+    cv2.circle(img_pts, tuple(inner_vis.astype(int)), 5, (0, 255, 0), -1)
+    cv2.putText(img_pts, "Vis", tuple(inner_vis.astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+    cv2.circle(img_pts, tuple(inner_hid.astype(int)), 5, (0, 0, 255), -1)
+    cv2.putText(img_pts, "Hid", tuple(inner_hid.astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+    axs[0, 1].imshow(img_pts)
+    axs[0, 1].set_title('2. Extracted & Inferred Corners')
+    axs[0, 1].axis('off')
+
+    # [3] Reprojection Box
+    img_box = img_rgb.copy()
+    proj_pts, _ = cv2.projectPoints(obj_points, rvec, tvec, camera_matrix, dist_coeffs)
+    proj_pts = proj_pts.reshape(-1, 2)
+    for i in range(4): 
+        cv2.line(img_box, tuple(proj_pts[i].astype(int)), tuple(proj_pts[(i+1)%4].astype(int)), (0, 255, 255), 2)
+        cv2.line(img_box, tuple(proj_pts[i+4].astype(int)), tuple(proj_pts[((i+1)%4)+4].astype(int)), (255, 0, 255), 2)
+        cv2.line(img_box, tuple(proj_pts[i].astype(int)), tuple(proj_pts[i+4].astype(int)), (0, 255, 0), 2)
+    axs[1, 0].imshow(img_box)
+    axs[1, 0].set_title('3. PnP Reprojection Box')
+    axs[1, 0].axis('off')
+
+    # [4] 3D Coordinate Axes
+    img_axes = img_rgb.copy()
+    cv2.drawFrameAxes(img_axes, camera_matrix, dist_coeffs, rvec, tvec, 50, 3)
+    axs[1, 1].imshow(img_axes)
+    axs[1, 1].set_title('4. 3D Coordinate Axes (X:R, Y:G, Z:B)')
+    axs[1, 1].axis('off')
+
+    plt.tight_layout()
+    plt.show()
+else:
+    print("▶ TODO 항목들의 None 값을 모두 올바른 코드로 채워주세요.")
+    print("▶ 코드가 완성되면 시각화 결과가 이곳에 출력됩니다.")</code></pre>
                 </div>
             </div>
         </details>
@@ -367,16 +481,151 @@ dist_coeffs = np.zeros((4,1))
             <div class="p-4 border-t border-gray-200 bg-green-50">
                 <div class="code-container bg-[#282c34] rounded-lg overflow-hidden text-sm">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <pre><code class="language-python"># 1. 마스크 생성
-lower_yellow = np.array([20, 100, 100])
+                    <pre><code class="language-python">def get_line_intersection(p1, p2, p3, p4):
+    """두 선분 (p1-p2), (p3-p4)의 무한 연장선 교차점을 반환합니다."""
+    x1, y1 = p1; x2, y2 = p2
+    x3, y3 = p3; x4, y4 = p4
+    denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+    if denom == 0: return None
+    px = ((x1*y2 - y1*x2)*(x3 - x4) - (x1 - x2)*(x3*y4 - y3*x4)) / denom
+    py = ((x1*y2 - y1*x2)*(y3 - y4) - (y1 - y2)*(x3*y4 - y3*x4)) / denom
+    return np.array([px, py], dtype=np.float32)
+
+# ==========================================
+# 0. 블록 이미지 로드 (파일명 반영)
+# ==========================================
+img = cv2.imread('block_rgb.png')
+if img is None:
+    raise ValueError("block_rgb.png 이미지를 찾을 수 없습니다.")
+
+img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+# ==========================================
+# 1. 마스크 생성 (HSV 범위 반영)
+# ==========================================
+lower_yellow = np.array([10, 60, 60])
 upper_yellow = np.array([40, 255, 255])
 mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
-mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5,5), np.uint8))
 
-# 6. solvePnP
-# image_points가 올바르게 매핑되었다는 전제하에:
-# ret, rvec, tvec = cv2.solvePnP(obj_points, image_points, camera_matrix, dist_coeffs)
-# cv2.drawFrameAxes(img, camera_matrix, dist_coeffs, rvec, tvec, 50)</code></pre>
+kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
+# ==========================================
+# 2. 2D 꼭짓점 추출 및 정렬
+# ==========================================
+contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+largest_cnt = max(contours, key=cv2.contourArea)
+
+epsilon_factor = 0.01
+for _ in range(100):
+    epsilon = epsilon_factor * cv2.arcLength(largest_cnt, True)
+    approx = cv2.approxPolyDP(largest_cnt, epsilon, True)
+    if len(approx) == 6: break
+    elif len(approx) &gt; 6: epsilon_factor += 0.002
+    else: epsilon_factor -= 0.002
+
+pts = approx.reshape(-1, 2).astype(np.float32)
+
+cx, cy = np.mean(pts, axis=0)
+angles = np.arctan2(pts[:, 1] - cy, pts[:, 0] - cx)
+sort_idx = np.argsort(angles)
+corners_2d = pts[sort_idx]
+
+top_idx = np.argmin(corners_2d[:, 1])
+corners_2d = np.roll(corners_2d, -top_idx, axis=0)
+
+# ==========================================
+# 3. 소실점 산출 및 4. 내부 꼭짓점 추론
+# ==========================================
+vp1 = get_line_intersection(corners_2d[0], corners_2d[1], corners_2d[3], corners_2d[4])
+vp2 = get_line_intersection(corners_2d[1], corners_2d[2], corners_2d[4], corners_2d[5])
+vp3 = get_line_intersection(corners_2d[2], corners_2d[3], corners_2d[5], corners_2d[0])
+
+inner_vis = get_line_intersection(corners_2d[1], vp3, corners_2d[3], vp2)
+inner_hid = get_line_intersection(corners_2d[0], vp2, corners_2d[2], vp1)
+
+# ==========================================
+# 5. 좌표 매핑
+# ==========================================
+obj_points = np.array([
+    [0, 0, 0], [60, 0, 0], [60, 60, 0], [0, 60, 0],
+    [0, 0, 100], [60, 0, 100], [60, 60, 100], [0, 60, 100]
+], dtype=np.float32)
+
+image_points = np.zeros((8, 2), dtype=np.float32)
+image_points[0], image_points[1], image_points[2] = corners_2d[4], corners_2d[3], corners_2d[2]
+image_points[3] = inner_hid
+image_points[4], image_points[5], image_points[6], image_points[7] = corners_2d[5], inner_vis, corners_2d[1], corners_2d[0]
+
+# ==========================================
+# 6. PnP 수행 및 계산
+# ==========================================
+camera_matrix = np.array([[800, 0, 320], [0, 800, 240], [0, 0, 1]], dtype=np.float32)
+dist_coeffs = np.zeros((4,1))
+
+success, rvec, tvec = cv2.solvePnP(obj_points, image_points, camera_matrix, dist_coeffs, flags=cv2.SOLVEPNP_ITERATIVE)
+
+# 거리 및 자세(Euler) 계산
+distance = np.linalg.norm(tvec)
+rmat, _ = cv2.Rodrigues(rvec)
+proj_matrix = np.hstack((rmat, tvec))
+_, _, _, _, _, _, euler_angles = cv2.decomposeProjectionMatrix(proj_matrix)
+pitch, yaw, roll = euler_angles.flatten()
+
+print(f"=== 3D Pose Estimation Results ===")
+print(f"Distance : {distance:.2f} mm")
+print(f"Pose (Pitch, Yaw, Roll): {pitch:.2f}°, {yaw:.2f}°, {roll:.2f}°")
+print(f"==================================")
+
+# ==========================================
+# 7. 4단계 시각화 (matplotlib 2x2)
+# ==========================================
+fig, axs = plt.subplots(2, 2, figsize=(14, 12))
+
+# [1] 원본 이미지 & 마스크 중첩
+axs[0, 0].imshow(img_rgb)
+axs[0, 0].imshow(mask, alpha=0.4, cmap='jet')
+axs[0, 0].set_title('1. HSV Masking')
+axs[0, 0].axis('off')
+
+# [2] 추출된 2D 꼭짓점 및 추론된 내부 점
+img_pts = img_rgb.copy()
+for i, pt in enumerate(corners_2d):
+    cv2.circle(img_pts, tuple(pt.astype(int)), 5, (255, 0, 0), -1)
+    cv2.putText(img_pts, f"p{i}", tuple(pt.astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+cv2.circle(img_pts, tuple(inner_vis.astype(int)), 5, (0, 255, 0), -1)
+cv2.putText(img_pts, "Vis", tuple(inner_vis.astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+cv2.circle(img_pts, tuple(inner_hid.astype(int)), 5, (0, 0, 255), -1)
+cv2.putText(img_pts, "Hid", tuple(inner_hid.astype(int)), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+axs[0, 1].imshow(img_pts)
+axs[0, 1].set_title('2. Extracted & Inferred Corners')
+axs[0, 1].axis('off')
+
+# [3] PnP 재투영 박스 (Reprojection)
+img_box = img_rgb.copy()
+proj_pts, _ = cv2.projectPoints(obj_points, rvec, tvec, camera_matrix, dist_coeffs)
+proj_pts = proj_pts.reshape(-1, 2)
+for i in range(4): # 바닥면
+    cv2.line(img_box, tuple(proj_pts[i].astype(int)), tuple(proj_pts[(i+1)%4].astype(int)), (0, 255, 255), 2)
+for i in range(4): # 윗면
+    cv2.line(img_box, tuple(proj_pts[i+4].astype(int)), tuple(proj_pts[((i+1)%4)+4].astype(int)), (255, 0, 255), 2)
+for i in range(4): # 기둥
+    cv2.line(img_box, tuple(proj_pts[i].astype(int)), tuple(proj_pts[i+4].astype(int)), (0, 255, 0), 2)
+axs[1, 0].imshow(img_box)
+axs[1, 0].set_title('3. PnP Reprojection Box')
+axs[1, 0].axis('off')
+
+# [4] 3D 축 렌더링 (Axes)
+img_axes = img_rgb.copy()
+cv2.drawFrameAxes(img_axes, camera_matrix, dist_coeffs, rvec, tvec, 50, 3)
+axs[1, 1].imshow(img_axes)
+axs[1, 1].set_title('4. 3D Coordinate Axes (X:R, Y:G, Z:B)')
+axs[1, 1].axis('off')
+
+plt.tight_layout()
+plt.show()</code></pre>
                 </div>
             </div>
         </details>
@@ -392,7 +641,7 @@ mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5,5), np.uint8))
         <!-- 이론 설명 이미지 -->
         <h4 class="font-bold mb-3 flex items-center text-gray-800"><span class="mr-2">📖</span> 이론 설명</h4>
         <div class="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg cursor-pointer mb-8 border border-gray-200 shadow-sm group" onclick="openLightbox(this)">
-            <img src="https://placehold.co/1920x1080/282c34/ffffff?text=Theory:+ICP+Registration+Algorithm" alt="ICP 알고리즘 원리" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+            <img src="./images/슬라이드3.JPG" alt="ICP 알고리즘 원리" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
         </div>
 
         <h3 class="font-bold mb-2 text-lg">📌 주요 함수 레퍼런스</h3>
@@ -477,97 +726,243 @@ mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5,5), np.uint8))
             <div class="p-4 border-t border-gray-200 bg-gray-50">
                 <div class="code-container bg-[#282c34] rounded-lg overflow-hidden text-sm">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <pre><code class="language-python"># 0~2 단계 수행 완료된 포인트 클라우드: pcd_block
-# TODO 3-1: DBSCAN 알고리즘으로 클러스터링을 진행하고 가장 큰 군집만 남기기
-# labels = np.array(pcd_block.cluster_dbscan(...))
-# largest_cluster_pcd = ...
+                    <pre><code class="language-python">import cv2
+import numpy as np
+import open3d as o3d
+import matplotlib.pyplot as plt
 
-# TODO 3-2: PCA 등으로 블록의 주축 구하기
-# center = largest_cluster_pcd.get_center()
-# cov = np.cov(np.asarray(largest_cluster_pcd.points).T)
-# eigenvalues, eigenvectors = np.linalg.eigh(cov)
+# ==========================================
+# 0~2. 전처리 과정 (제공됨)
+# ==========================================
+def create_point_cloud_from_depth(depth_img, camera_matrix):
+    h, w = depth_img.shape
+    fx, fy = camera_matrix[0, 0], camera_matrix[1, 1]
+    cx, cy = camera_matrix[0, 2], camera_matrix[1, 2]
+    
+    u, v = np.meshgrid(np.arange(w), np.arange(h))
+    valid = depth_img &gt; 0
+    z = depth_img[valid]
+    
+    x = (u[valid] - cx) * z / fx
+    y = (v[valid] - cy) * z / fy
+    
+    return np.vstack((x, y, z)).T
 
-# TODO 4-1: 초기 변환 행렬 4x4 생성
-init_transform = np.eye(4)
-# 회전 부분 및 병진 부분 대입
+# 카메라 파라미터 및 이미지 로드
+fx, fy = 910.72, 910.86
+cx, cy = 634.24, 355.96
+camera_matrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32)
 
-# TODO 4-2: ICP 함수 수행
-target_pcd = ... # 정답 3D 모델
-# reg_p2p = o3d.pipelines.registration.registration_icp(
-#     largest_cluster_pcd, target_pcd, max_correspondence_distance=0.02,
-#     init=init_transform,
-#     estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint()
-# )
+depth_img = cv2.imread('block_d.png', cv2.IMREAD_UNCHANGED)
+rgb_img = cv2.imread('block_rgb.png')
+rgb_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2RGB)
 
-# TODO 4-3: 결과 변환 행렬 추출
-# final_transformation = reg_p2p.transformation
-</code></pre>
+# 1. 정답 모델(Target) 생성 (중심을 원점으로 맞춤)
+target_mesh = o3d.geometry.TriangleMesh.create_box(width=60, height=60, depth=100)
+target_mesh.translate((-30, -30, -50)) # 무게중심을 (0,0,0)으로 이동
+target_pcd = target_mesh.sample_points_uniformly(number_of_points=5000)
+
+# 2. 깊이 이미지 -> 포인트 클라우드 변환
+points = create_point_cloud_from_depth(depth_img, camera_matrix)
+source_pcd = o3d.geometry.PointCloud()
+source_pcd.points = o3d.utility.Vector3dVector(points)
+
+# 3. RANSAC 기반 배경(바닥) 평면 제거
+source_pcd = source_pcd.voxel_down_sample(voxel_size=2.0)
+plane_model, inliers = source_pcd.segment_plane(distance_threshold=5.0, ransac_n=3, num_iterations=1000)
+# inliers(바닥)를 제외한 나머지(나무 블록+노이즈)만 추출
+outlier_cloud = source_pcd.select_by_index(inliers, invert=True)
+
+# ==========================================
+# TODO 3-1: 포인트 클라우드 군집화 (DBSCAN)
+# ==========================================
+# outlier_cloud에서 cluster_dbscan을 사용하여 군집화합니다. (eps=10.0, min_points=20)
+# 가장 점이 많은 군집(노이즈 -1 제외)의 인덱스를 찾아 block_pcd로 추출하세요.
+labels = None
+# 가장 큰 군집 번호 찾기 및 추출 로직 작성
+block_pcd = None 
+
+# ==========================================
+# TODO 3-2: 주축(Principal Axis) 추정 (PCA)
+# ==========================================
+# block_pcd의 점들을 numpy 배열로 변환한 후, 무게중심(mean)과 공분산 행렬(covariance)을 구하세요.
+# 고윳값 분해(np.linalg.eigh)를 통해 주축 벡터(Eigenvectors)를 계산하세요.
+pts = None
+mean = None
+cov = None
+eigenvalues, eigenvectors = None, None
+
+# 좌표계 우수계(Right-handed) 정렬 확인 로직 (작성 완료 시 주석 해제)
+# if np.linalg.det(eigenvectors) &lt; 0:
+#     eigenvectors[:, 2] = -eigenvectors[:, 2]
+
+# ==========================================
+# TODO 4-1: 초기 정렬 매트릭스 생성
+# ==========================================
+# 계산된 eigenvectors를 회전(Rotation)으로, mean을 이동(Translation)으로 하는 
+# 4x4 형태의 초기 변환 행렬(init_transform)을 생성하세요.
+init_transform = None
+
+# ==========================================
+# TODO 4-2: ICP 정합 실행 및 추출
+# ==========================================
+# o3d.pipelines.registration.registration_icp를 실행하여 타겟 모델을 블록에 맞춥니다.
+# (threshold=10.0, init_transform 적용)
+# 완료 후 최종 변환 행렬에서 회전 행렬(R)과 이동 벡터(tvec)를 추출하세요.
+icp_result = None
+R = None
+tvec = None
+
+# ==========================================
+# 5. 역투영 및 시각화 (제공됨)
+# ==========================================
+if R is not None and tvec is not None:
+    # 회전 행렬을 회전 벡터(rvec)로 변환
+    rvec, _ = cv2.Rodrigues(R)
+    dist_coeffs = np.zeros((4,1))
+    
+    # RGB 이미지에 3D 축 투영 (축 길이 50mm)
+    img_projected = rgb_img.copy()
+    cv2.drawFrameAxes(img_projected, camera_matrix, dist_coeffs, rvec, tvec, 50, 3)
+    
+    # 텍스트 출력
+    distance = np.linalg.norm(tvec)
+    cv2.putText(img_projected, f"Dist: {distance:.1f}mm", (20, 40), 
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    
+    plt.figure(figsize=(10, 8))
+    plt.imshow(img_projected)
+    plt.title('Step 5: Reprojection & Axes (ICP Result)')
+    plt.axis('off')
+    plt.show()
+else:
+    print("▶ TODO 항목들을 완성하면 RGB 역투영 시각화가 출력됩니다.")</code></pre>
                 </div>
             </div>
         </details>
-    </section>
-
-    <!-- Section 4 -->
-    <section class="mb-16">
-        <h2 class="text-2xl font-bold mb-4 flex items-center">
-            <span class="mr-2">4.</span> Region Growing & RANSAC 기반 축/자세 추정
-        </h2>
-        <p class="mb-6 text-gray-700">이번에는 객체를 구성하는 평면들의 정보를 바탕으로 축을 계산합니다. Region Growing으로 큰 면들을 분할하고, RANSAC으로 수식을 구하여 교선(축)을 도출합니다.</p>
-
-        <h4 class="font-bold mb-3 flex items-center text-gray-800"><span class="mr-2">📖</span> 이론 설명</h4>
-        <div class="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg cursor-pointer mb-8 border border-gray-200 shadow-sm group" onclick="openLightbox(this)">
-            <img src="https://placehold.co/1920x1080/282c34/ffffff?text=Theory:+Region+Growing+%26+RANSAC" alt="Region Growing 이론" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-        </div>
-
-        <div class="bg-white border border-gray-200 rounded-lg p-5 mb-6 shadow-sm">
-            <h4 class="font-bold text-lg mb-4 flex items-center"><span class="mr-2">📝</span> 실습 TODO 워크플로</h4>
-            <div class="flex items-start mb-4">
-                <div class="flex-shrink-0 w-8 h-8 bg-[#37352f] text-white rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">1-1</div>
-                <div>
-                    <div class="font-bold text-[#37352f] mb-1">Region Growing 면 분할 (TODO)</div>
-                    <span class="text-gray-500 text-sm">— 법선(Normal) 각도 차이를 기준으로 점들을 병합하여 가장 큰 3개의 면 클러스터를 찾습니다.</span>
-                </div>
-            </div>
-            <div class="flex items-start mb-4">
-                <div class="flex-shrink-0 w-8 h-8 bg-[#37352f] text-white rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">2-1</div>
-                <div>
-                    <div class="font-bold text-[#37352f] mb-1">RANSAC 평면 피팅 (TODO)</div>
-                    <span class="text-gray-500 text-sm">— 분할된 3개의 면 각각에 대해 RANSAC을 적용하여 평면의 방정식(a,b,c,d)을 도출합니다.</span>
-                </div>
-            </div>
-            <div class="flex items-start mb-4">
-                <div class="flex-shrink-0 w-8 h-8 bg-gray-300 text-gray-700 rounded-full flex items-center justify-center font-bold mr-3 text-xs mt-0.5">3~5</div>
-                <div>
-                    <div class="font-bold text-[#37352f] mb-1">축 교선 도출 및 직교성 보정, 역투영 (제공됨)</div>
-                    <span class="text-gray-500 text-sm">구해진 평면들 간의 외적을 통해 축 벡터를 추출하고 역투영하여 확인합니다.</span>
-                </div>
-            </div>
-        </div>
-
-        <details class="group bg-white border border-gray-200 rounded-lg shadow-sm mb-4">
-            <summary class="font-semibold p-4 cursor-pointer flex items-center hover:bg-gray-50 transition">
-                <svg class="w-5 h-5 mr-2 transition-transform duration-200 group-open:rotate-90 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        
+        <!-- 정답 코드 -->
+        <details class="group bg-white border border-gray-200 rounded-lg shadow-sm">
+            <summary class="font-semibold p-4 cursor-pointer flex items-center hover:bg-gray-50 transition text-green-700">
+                <svg class="w-5 h-5 mr-2 transition-transform duration-200 group-open:rotate-90 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
-                💻 노트북 뼈대 코드 보기
+                ✅ 정답 예시 확인하기
             </summary>
-            <div class="p-4 border-t border-gray-200 bg-gray-50">
+            <div class="p-4 border-t border-gray-200 bg-green-50">
                 <div class="code-container bg-[#282c34] rounded-lg overflow-hidden text-sm">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <pre><code class="language-python"># pcd_block: 배경이 제거된 나무 블록 포인트 클라우드
+                    <pre><code class="language-python">import cv2
+import numpy as np
+import open3d as o3d
+import matplotlib.pyplot as plt
 
-# TODO 1-1: 법선 계산 및 Region Growing으로 3개 면 분리
-# pcd_block.estimate_normals(...)
-# 힌트: 법선 벡터의 유사도(내적)를 기반으로 군집화 수행
-planes = [] # 3개의 포인트 클라우드 군집 저장 리스트
+# ==========================================
+# 0~2. 전처리 과정 (제공됨)
+# ==========================================
+def create_point_cloud_from_depth(depth_img, camera_matrix):
+    h, w = depth_img.shape
+    fx, fy = camera_matrix[0, 0], camera_matrix[1, 1]
+    cx, cy = camera_matrix[0, 2], camera_matrix[1, 2]
+    u, v = np.meshgrid(np.arange(w), np.arange(h))
+    valid = depth_img &gt; 0
+    z = depth_img[valid]
+    x = (u[valid] - cx) * z / fx
+    y = (v[valid] - cy) * z / fy
+    return np.vstack((x, y, z)).T
 
-# TODO 2-1: 3개의 면 각각에 RANSAC 수행
-plane_models = []
-for plane_pcd in planes:
-    # plane_model, inliers = plane_pcd.segment_plane(distance_threshold=0.01, ransac_n=3, num_iterations=1000)
-    # plane_models.append(plane_model)
-    pass
-</code></pre>
+fx, fy = 910.72, 910.86
+cx, cy = 634.24, 355.96
+camera_matrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32)
+
+depth_img = cv2.imread('block_d.png', cv2.IMREAD_UNCHANGED)
+rgb_img = cv2.imread('block_rgb.png')
+rgb_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2RGB)
+
+target_mesh = o3d.geometry.TriangleMesh.create_box(width=60, height=60, depth=100)
+target_mesh.translate((-30, -30, -50)) 
+target_pcd = target_mesh.sample_points_uniformly(number_of_points=5000)
+
+points = create_point_cloud_from_depth(depth_img, camera_matrix)
+source_pcd = o3d.geometry.PointCloud()
+source_pcd.points = o3d.utility.Vector3dVector(points)
+
+source_pcd = source_pcd.voxel_down_sample(voxel_size=2.0)
+plane_model, inliers = source_pcd.segment_plane(distance_threshold=5.0, ransac_n=3, num_iterations=1000)
+outlier_cloud = source_pcd.select_by_index(inliers, invert=True)
+
+# ==========================================
+# 3-1: 포인트 클라우드 군집화 (DBSCAN)
+# ==========================================
+labels = np.array(outlier_cloud.cluster_dbscan(eps=10.0, min_points=20, print_progress=False))
+
+# -1(노이즈)을 제외하고 가장 점이 많은 군집 찾기
+unique_labels, counts = np.unique(labels[labels &gt;= 0], return_counts=True)
+best_label = unique_labels[np.argmax(counts)]
+
+# 나무 블록에 해당하는 점들만 추출
+block_indices = np.where(labels == best_label)[0]
+block_pcd = outlier_cloud.select_by_index(block_indices)
+
+# ==========================================
+# 3-2: 주축(Principal Axis) 추정 (PCA)
+# ==========================================
+pts = np.asarray(block_pcd.points)
+mean = np.mean(pts, axis=0) # 무게중심
+
+# 공분산 행렬 계산 및 고윳값 분해
+centered_pts = pts - mean
+cov = np.cov(centered_pts, rowvar=False)
+eigenvalues, eigenvectors = np.linalg.eigh(cov)
+
+# 회전 행렬의 조건(det(R) = 1)을 만족시키기 위해 우수계 확인
+if np.linalg.det(eigenvectors) &lt; 0:
+    eigenvectors[:, 2] = -eigenvectors[:, 2]
+
+# ==========================================
+# 4-1: 초기 정렬 매트릭스 생성
+# ==========================================
+init_transform = np.eye(4)
+init_transform[:3, :3] = eigenvectors # 주축을 회전 행렬로 사용
+init_transform[:3, 3] = mean         # 무게중심을 이동 벡터로 사용
+
+# ==========================================
+# 4-2: ICP 정합 실행 및 추출
+# ==========================================
+threshold = 10.0
+icp_result = o3d.pipelines.registration.registration_icp(
+    target_pcd, block_pcd, threshold, init_transform,
+    o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+    o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=2000)
+)
+
+# 최종 4x4 행렬에서 R, t 분리
+final_transform = icp_result.transformation
+R = final_transform[:3, :3]
+tvec = final_transform[:3, 3]
+
+print("=== ICP Result ===")
+print("Fitness:", icp_result.fitness)
+print("RMSE:", icp_result.inlier_rmse)
+
+# ==========================================
+# 5. 역투영 및 시각화 (제공됨)
+# ==========================================
+rvec, _ = cv2.Rodrigues(R)
+dist_coeffs = np.zeros((4,1))
+
+img_projected = rgb_img.copy()
+cv2.drawFrameAxes(img_projected, camera_matrix, dist_coeffs, rvec, tvec, 50, 3)
+
+distance = np.linalg.norm(tvec)
+cv2.putText(img_projected, f"Dist: {distance:.1f}mm", (20, 40), 
+            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+plt.figure(figsize=(10, 8))
+plt.imshow(img_projected)
+plt.title('Step 5: Reprojection & Axes (ICP Result)')
+plt.axis('off')
+plt.show()</code></pre>
                 </div>
             </div>
         </details>
@@ -575,23 +970,23 @@ for plane_pcd in planes:
 
     <div class="divider-text">심화 학습 ─ 시스템 캘리브레이션</div>
 
-    <!-- Section 5 -->
+    <!-- Section 4 (기존 5번) -->
     <section class="mb-16">
         <h2 class="text-2xl font-bold mb-4 flex items-center">
-            <span class="mr-2">5.</span> 로봇-카메라 좌표계 이해 (Hand-Eye Calibration)
+            <span class="mr-2">4.</span> 로봇-카메라 좌표계 이해 (Hand-Eye Calibration)
         </h2>
         <p class="mb-6 text-gray-700">로봇의 움직임과 카메라 관측 결과 사이의 관계를 수학적으로 정의하여, 카메라 좌표계와 로봇 좌표계를 일치시키는 캘리브레이션 과정을 실습합니다.</p>
 
         <h4 class="font-bold mb-3 flex items-center text-gray-800"><span class="mr-2">📖</span> 이론 설명</h4>
         <div class="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg cursor-pointer mb-6 border border-gray-200 shadow-sm group" onclick="openLightbox(this)">
-            <img src="https://placehold.co/1920x1080/282c34/ffffff?text=Theory:+Eye-to-Hand+vs+Eye-in-Hand" alt="두 구성 시스템 그림" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+            <img src="./images/슬라이드4.JPG" alt="두 구성 시스템 그림" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <div class="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg cursor-pointer border border-gray-200 shadow-sm group" onclick="openLightbox(this)">
-                <img src="https://placehold.co/1920x1080/282c34/ffffff?text=Theory:+Eye-in-Hand+Solution" alt="Eye-in-Hand 솔루션 수식" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                <img src="./images/슬라이드5.JPG" alt="Eye-in-Hand 솔루션 수식" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
             </div>
             <div class="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg cursor-pointer border border-gray-200 shadow-sm group" onclick="openLightbox(this)">
-                <img src="https://placehold.co/1920x1080/282c34/ffffff?text=Theory:+Eye-to-Hand+Solution" alt="Eye-to-Hand 솔루션 수식" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                <img src="./images/슬라이드6.JPG" alt="Eye-to-Hand 솔루션 수식" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
             </div>
         </div>
 
