@@ -740,15 +740,20 @@ if(auto_bk){
         <div class="code-container bg-[#282c34] rounded-lg overflow-hidden text-sm mb-4">
             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
             <pre><code class="language-bash"># 1. 작업 공간(ws) 이동 및 저장소 클론
-cd ~/ros2_ws
-git clone -b src https://github.com/Bkyb/lacture-pages.git src
-
+cd ~/ros2_ws/src
+git clone -b src https://github.com/Bkyb/lacture-pages.git
+cd ..
+                
+sudo apt install ros-$ROS_DISTRO-moveit-ros-planning-interface
+                
 colcon build --package-select manipulator_practice_cpp
 colcon build --package-select manipulator_practice_python --symlink-install
 
 # 2. 터미널 1: 기록된 데이터 플레이어 실행 (카메라 대체)
 ros2 run manipulator_practice_python data_player --ros-args -p directory_path:="[데이터셋_절대경로]"
 
+pip install ultralytics
+                
 # 3. 터미널 2: YOLO 기반 사람 관절 포인트 검출 노드 실행
 ros2 run manipulator_practice_python pose_hip 
 
