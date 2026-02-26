@@ -1,0 +1,4 @@
+float32[16] pose_matrix  # Row-major 4x4 matrix
+---
+bool success
+string message
