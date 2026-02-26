@@ -3,7 +3,7 @@
 ```
 cd ros2_ws
 
-git clone -b humble https://github.com/Bkyb/lacture-pages.git src
+git clone -b src https://github.com/Bkyb/lacture-pages.git src
 
 colcon build
 ```
