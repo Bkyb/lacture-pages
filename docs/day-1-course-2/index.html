@@ -856,7 +856,7 @@ init_transform[:3, 3] = mean
 # ==========================================
 # [TODO 4] ICP 정합 실행
 # ==========================================
-threshold = 10.0
+threshold = 0.1
 
 # 목표: Open3D의 ICP 알고리즘을 사용하여 target_pcd와 block_pcd를 정합하세요.
 # icp_result = o3d.pipelines.registration.registration_icp(...)
