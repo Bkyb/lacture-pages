@@ -713,7 +713,7 @@ plt.show()</code></pre>
 
         <h4 class="font-bold mb-3 flex items-center text-gray-800"><span class="mr-2">✨</span> 예상 실행 결과</h4>
         <div class="aspect-video w-full overflow-hidden bg-gray-100 rounded-lg cursor-pointer mb-6 border border-gray-200 shadow-sm group" onclick="openLightbox(this)">
-            <img src="./images/s8.JPG" alt="ICP 실행 결과" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+            <img src="./images/s8.jpg" alt="ICP 실행 결과" class="gallery-target w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
         </div>
 
         <details class="group bg-white border border-gray-200 rounded-lg shadow-sm mb-4">
@@ -727,116 +727,166 @@ plt.show()</code></pre>
                 <div class="code-container bg-[#282c34] rounded-lg overflow-hidden text-sm">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                     <pre><code class="language-python">import cv2
-import numpy as np
-import open3d as o3d
-import matplotlib.pyplot as plt
+# ==========================================
+# [제공됨] 코랩용 3D 시각화 헬퍼 함수
+# ==========================================
+def draw_pcd_colab(pcd_list, title="Point Cloud", lines=None):
+    fig = go.Figure()
+    for pcd in pcd_list:
+        points = np.asarray(pcd.points)
+        if not pcd.has_colors():
+            pcd.paint_uniform_color([0.5, 0.5, 0.5])
+        colors = np.asarray(pcd.colors)
+        color_str = [f'rgb({int(c[0]*255)}, {int(c[1]*255)}, {int(c[2]*255)})' for c in colors]
+        
+        fig.add_trace(go.Scatter3d(
+            x=points[:, 0], y=points[:, 1], z=points[:, 2],
+            mode='markers', marker=dict(size=2, color=color_str), showlegend=False
+        ))
+        
+    if lines:
+        for line in lines:
+            pts, color = line
+            fig.add_trace(go.Scatter3d(
+                x=pts[:, 0], y=pts[:, 1], z=pts[:, 2],
+                mode='lines', line=dict(color=color, width=5), showlegend=False
+            ))
+            
+    fig.update_layout(title=title, scene=dict(aspectmode='data'), margin=dict(l=0, r=0, b=0, t=40))
+    fig.show()
 
-# ==========================================
-# 0~2. 전처리 과정 (제공됨)
-# ==========================================
 def create_point_cloud_from_depth(depth_img, camera_matrix):
     h, w = depth_img.shape
     fx, fy = camera_matrix[0, 0], camera_matrix[1, 1]
     cx, cy = camera_matrix[0, 2], camera_matrix[1, 2]
-    
     u, v = np.meshgrid(np.arange(w), np.arange(h))
-    valid = depth_img &gt; 0
+    valid = depth_img > 0
     z = depth_img[valid]
-    
     x = (u[valid] - cx) * z / fx
     y = (v[valid] - cy) * z / fy
-    
     return np.vstack((x, y, z)).T
 
-# 카메라 파라미터 및 이미지 로드
+# ==========================================
+# 0. 초기 설정 및 데이터 로드 (제공됨)
+# ==========================================
 fx, fy = 910.72, 910.86
 cx, cy = 634.24, 355.96
 camera_matrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32)
 
+# 이미지 로드 (실제 파일 경로에 맞게 수정 필요)
 depth_img = cv2.imread('block_d.png', cv2.IMREAD_UNCHANGED)
 rgb_img = cv2.imread('block_rgb.png')
-rgb_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2RGB)
-
-# 1. 정답 모델(Target) 생성 (중심을 원점으로 맞춤)
-target_mesh = o3d.geometry.TriangleMesh.create_box(width=60, height=60, depth=100)
-target_mesh.translate((-30, -30, -50)) # 무게중심을 (0,0,0)으로 이동
-target_pcd = target_mesh.sample_points_uniformly(number_of_points=5000)
-
-# 2. 깊이 이미지 -> 포인트 클라우드 변환
-points = create_point_cloud_from_depth(depth_img, camera_matrix)
-source_pcd = o3d.geometry.PointCloud()
-source_pcd.points = o3d.utility.Vector3dVector(points)
-
-# 3. RANSAC 기반 배경(바닥) 평면 제거
-source_pcd = source_pcd.voxel_down_sample(voxel_size=2.0)
-plane_model, inliers = source_pcd.segment_plane(distance_threshold=5.0, ransac_n=3, num_iterations=1000)
-# inliers(바닥)를 제외한 나머지(나무 블록+노이즈)만 추출
-outlier_cloud = source_pcd.select_by_index(inliers, invert=True)
+rgb_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2RGB) 
 
 # ==========================================
-# TODO 3-1: 포인트 클라우드 군집화 (DBSCAN)
+# [TODO 1] 3D 타겟 모델을 3면(Shell) 형태로 만들기
 # ==========================================
-# outlier_cloud에서 cluster_dbscan을 사용하여 군집화합니다. (eps=10.0, min_points=20)
-# 가장 점이 많은 군집(노이즈 -1 제외)의 인덱스를 찾아 block_pcd로 추출하세요.
-labels = None
-# 가장 큰 군집 번호 찾기 및 추출 로직 작성
-block_pcd = None 
+target_mesh = o3d.geometry.TriangleMesh.create_box(width=60, height=100, depth=60)
+target_mesh.translate((-30, -30, -50)) 
+target_pcd_full = target_mesh.sample_points_uniformly(number_of_points=15000)
+target_pts = np.asarray(target_pcd_full.points)
+
+# 목표: 카메라에 보이는 3개의 면(앞, 위, 좌/우)만 남기세요.
+tol = 1.0
+# mask_z = ??? # Z축 앞면 
+# mask_y = ??? # Y축 윗면
+# mask_x = ??? # X축 측면
+# visible_mask = mask_z | mask_y | mask_x
+
+# 임시 처리 (실습 시 위 주석을 풀고 아래 줄을 지우세요)
+visible_mask = np.ones(len(target_pts), dtype=bool) 
+
+target_pcd = target_pcd_full.select_by_index(np.where(visible_mask)[0])
+target_pcd.paint_uniform_color([0.2, 0.8, 0.2])
 
 # ==========================================
-# TODO 3-2: 주축(Principal Axis) 추정 (PCA)
+# [TODO 2] 2D HSV 마스킹
 # ==========================================
-# block_pcd의 점들을 numpy 배열로 변환한 후, 무게중심(mean)과 공분산 행렬(covariance)을 구하세요.
-# 고윳값 분해(np.linalg.eigh)를 통해 주축 벡터(Eigenvectors)를 계산하세요.
-pts = None
-mean = None
-cov = None
-eigenvalues, eigenvectors = None, None
+hsv = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2HSV)
 
-# 좌표계 우수계(Right-handed) 정렬 확인 로직 (작성 완료 시 주석 해제)
-# if np.linalg.det(eigenvectors) &lt; 0:
-#     eigenvectors[:, 2] = -eigenvectors[:, 2]
+# 목표: 노란색 블록 영역만 추출하는 HSV 범위를 설정하고 마스크를 생성하세요.
+# lower_yellow = ???
+# upper_yellow = ???
+# mask = cv2.inRange(...)
+# mask = cv2.morphologyEx(...) # 노이즈 제거 (선택)
 
-# ==========================================
-# TODO 4-1: 초기 정렬 매트릭스 생성
-# ==========================================
-# 계산된 eigenvectors를 회전(Rotation)으로, mean을 이동(Translation)으로 하는 
-# 4x4 형태의 초기 변환 행렬(init_transform)을 생성하세요.
-init_transform = None
+# 임시 처리 (실습 시 위 주석을 풀고 아래 줄을 지우세요)
+mask = np.ones(depth_img.shape, dtype=np.uint8) * 255 
 
 # ==========================================
-# TODO 4-2: ICP 정합 실행 및 추출
+# 2. 마스킹된 영역만 3D 포인트 클라우드로 변환 (제공됨)
 # ==========================================
-# o3d.pipelines.registration.registration_icp를 실행하여 타겟 모델을 블록에 맞춥니다.
-# (threshold=10.0, init_transform 적용)
-# 완료 후 최종 변환 행렬에서 회전 행렬(R)과 이동 벡터(tvec)를 추출하세요.
-icp_result = None
-R = None
-tvec = None
+masked_depth = depth_img.copy()
+masked_depth[mask == 0] = 0
+
+points = create_point_cloud_from_depth(masked_depth, camera_matrix)
+block_pcd = o3d.geometry.PointCloud()
+block_pcd.points = o3d.utility.Vector3dVector(points)
+block_pcd = block_pcd.voxel_down_sample(voxel_size=2.0)
+block_pcd.paint_uniform_color([0.8, 0.2, 0.2])
+
+# ==========================================
+# [TODO 3] 주축(Principal Axis) 추정 (PCA) 및 기하학적 축 정렬
+# ==========================================
+pts = np.asarray(block_pcd.points)
+mean = np.mean(pts, axis=0)
+
+# 목표 1: 공분산 행렬을 구하고 고윳값 분해를 통해 주축(eigenvectors)을 도출하세요.
+# centered_pts = ???
+# cov = np.cov(...)
+# eigenvalues, eigenvectors = np.linalg.eigh(...)
+
+# 임시 처리 (실습 시 위 주석을 풀고 아래 줄을 지우세요)
+eigenvectors = np.eye(3)
+
+# 목표 2: 타겟 템플릿의 형태(Y축이 가장 김)와 도출된 PCA 축(Z축이 가장 김)을 매칭하세요.
+# (힌트: 외적을 사용하여 우수계를 유지하며 열 벡터의 순서를 재배치합니다)
+# v0 = eigenvectors[:, 0]
+# v1 = eigenvectors[:, 1]
+# v2 = eigenvectors[:, 2]
+# R_init = np.column_stack((...))
+
+# 임시 처리 (실습 시 위 주석을 풀고 아래 줄을 지우세요)
+R_init = eigenvectors
+
+init_transform = np.eye(4)
+init_transform[:3, :3] = R_init 
+init_transform[:3, 3] = mean         
+
+# ==========================================
+# [TODO 4] ICP 정합 실행
+# ==========================================
+threshold = 10.0
+
+# 목표: Open3D의 ICP 알고리즘을 사용하여 target_pcd와 block_pcd를 정합하세요.
+# icp_result = o3d.pipelines.registration.registration_icp(...)
+
+# 임시 처리 (실습 시 위 주석을 풀고 아래 줄을 지우세요)
+class DummyICP: transformation = init_transform
+icp_result = DummyICP()
+
+final_transform = icp_result.transformation
+R = final_transform[:3, :3]
+tvec = final_transform[:3, 3]
 
 # ==========================================
 # 5. 역투영 및 시각화 (제공됨)
 # ==========================================
-if R is not None and tvec is not None:
-    # 회전 행렬을 회전 벡터(rvec)로 변환
-    rvec, _ = cv2.Rodrigues(R)
-    dist_coeffs = np.zeros((4,1))
-    
-    # RGB 이미지에 3D 축 투영 (축 길이 50mm)
-    img_projected = rgb_img.copy()
-    cv2.drawFrameAxes(img_projected, camera_matrix, dist_coeffs, rvec, tvec, 50, 3)
-    
-    # 텍스트 출력
-    distance = np.linalg.norm(tvec)
-    cv2.putText(img_projected, f"Dist: {distance:.1f}mm", (20, 40), 
-                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    
-    plt.figure(figsize=(10, 8))
-    plt.imshow(img_projected)
-    plt.title('Step 5: Reprojection & Axes (ICP Result)')
-    plt.axis('off')
-    plt.show()
-else:
-    print("▶ TODO 항목들을 완성하면 RGB 역투영 시각화가 출력됩니다.")</code></pre>
+rvec, _ = cv2.Rodrigues(R)
+dist_coeffs = np.zeros((4,1))
+
+img_projected = rgb_img.copy()
+cv2.drawFrameAxes(img_projected, camera_matrix, dist_coeffs, rvec, tvec, 50, 3)
+
+distance = np.linalg.norm(tvec)
+cv2.putText(img_projected, f"Dist: {distance:.1f}mm", (20, 40), 
+            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+plt.figure(figsize=(10, 8))
+plt.imshow(img_projected)
+plt.title('Step 5: Reprojection & Axes')
+plt.axis('off')
+plt.show()</code></pre>
                 </div>
             </div>
         </details>
@@ -858,76 +908,122 @@ import open3d as o3d
 import matplotlib.pyplot as plt
 
 # ==========================================
-# 0~2. 전처리 과정 (제공됨)
+# [제공됨] 코랩용 3D 시각화 헬퍼 함수
 # ==========================================
+def draw_pcd_colab(pcd_list, title="Point Cloud", lines=None):
+    fig = go.Figure()
+    for pcd in pcd_list:
+        points = np.asarray(pcd.points)
+        if not pcd.has_colors():
+            pcd.paint_uniform_color([0.5, 0.5, 0.5])
+        colors = np.asarray(pcd.colors)
+        color_str = [f'rgb({int(c[0]*255)}, {int(c[1]*255)}, {int(c[2]*255)})' for c in colors]
+        
+        fig.add_trace(go.Scatter3d(
+            x=points[:, 0], y=points[:, 1], z=points[:, 2],
+            mode='markers', marker=dict(size=2, color=color_str), showlegend=False
+        ))
+        
+    if lines:
+        for line in lines:
+            pts, color = line
+            fig.add_trace(go.Scatter3d(
+                x=pts[:, 0], y=pts[:, 1], z=pts[:, 2],
+                mode='lines', line=dict(color=color, width=5), showlegend=False
+            ))
+            
+    fig.update_layout(title=title, scene=dict(aspectmode='data'), margin=dict(l=0, r=0, b=0, t=40))
+    fig.show()
+
 def create_point_cloud_from_depth(depth_img, camera_matrix):
     h, w = depth_img.shape
     fx, fy = camera_matrix[0, 0], camera_matrix[1, 1]
     cx, cy = camera_matrix[0, 2], camera_matrix[1, 2]
     u, v = np.meshgrid(np.arange(w), np.arange(h))
-    valid = depth_img &gt; 0
+    valid = depth_img > 0
     z = depth_img[valid]
     x = (u[valid] - cx) * z / fx
     y = (v[valid] - cy) * z / fy
     return np.vstack((x, y, z)).T
 
+# ==========================================
+# 0. 초기 설정 및 데이터 로드
+# ==========================================
 fx, fy = 910.72, 910.86
 cx, cy = 634.24, 355.96
 camera_matrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32)
 
 depth_img = cv2.imread('block_d.png', cv2.IMREAD_UNCHANGED)
 rgb_img = cv2.imread('block_rgb.png')
-rgb_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2RGB)
+rgb_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2RGB) 
 
-target_mesh = o3d.geometry.TriangleMesh.create_box(width=60, height=60, depth=100)
+# ==========================================
+# [TODO 1 정답] 3D 타겟 모델을 3면(Shell) 형태로 만들기
+# ==========================================
+target_mesh = o3d.geometry.TriangleMesh.create_box(width=60, height=100, depth=60)
 target_mesh.translate((-30, -30, -50)) 
-target_pcd = target_mesh.sample_points_uniformly(number_of_points=5000)
+target_pcd_full = target_mesh.sample_points_uniformly(number_of_points=15000)
+target_pts = np.asarray(target_pcd_full.points)
 
-points = create_point_cloud_from_depth(depth_img, camera_matrix)
-source_pcd = o3d.geometry.PointCloud()
-source_pcd.points = o3d.utility.Vector3dVector(points)
+# 카메라에 보이는 3개의 면(앞, 위, 좌)만 남깁니다.
+tol = 1.0
+mask_z = np.abs(target_pts[:, 2] - (-50)) < tol  # Z축 앞면
+mask_y = np.abs(target_pts[:, 1] - (-30)) < tol  # Y축 윗면
+mask_x = np.abs(target_pts[:, 0] - (-30)) < tol  # X축 좌측면
 
-source_pcd = source_pcd.voxel_down_sample(voxel_size=2.0)
-plane_model, inliers = source_pcd.segment_plane(distance_threshold=5.0, ransac_n=3, num_iterations=1000)
-outlier_cloud = source_pcd.select_by_index(inliers, invert=True)
-
-# ==========================================
-# 3-1: 포인트 클라우드 군집화 (DBSCAN)
-# ==========================================
-labels = np.array(outlier_cloud.cluster_dbscan(eps=10.0, min_points=20, print_progress=False))
-
-# -1(노이즈)을 제외하고 가장 점이 많은 군집 찾기
-unique_labels, counts = np.unique(labels[labels &gt;= 0], return_counts=True)
-best_label = unique_labels[np.argmax(counts)]
-
-# 나무 블록에 해당하는 점들만 추출
-block_indices = np.where(labels == best_label)[0]
-block_pcd = outlier_cloud.select_by_index(block_indices)
+visible_mask = mask_z | mask_y | mask_x
+target_pcd = target_pcd_full.select_by_index(np.where(visible_mask)[0])
+target_pcd.paint_uniform_color([0.2, 0.8, 0.2])
 
 # ==========================================
-# 3-2: 주축(Principal Axis) 추정 (PCA)
+# [TODO 2 정답] 2D HSV 마스킹 (노란색 블록 추출)
+# ==========================================
+hsv = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2HSV)
+lower_yellow = np.array([10, 60, 60])
+upper_yellow = np.array([40, 255, 255])
+mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
+
+# 모폴로지 연산으로 노이즈 제거
+kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
+# ==========================================
+# 2. 마스킹된 영역만 3D 포인트 클라우드로 변환
+# ==========================================
+masked_depth = depth_img.copy()
+masked_depth[mask == 0] = 0
+
+points = create_point_cloud_from_depth(masked_depth, camera_matrix)
+block_pcd = o3d.geometry.PointCloud()
+block_pcd.points = o3d.utility.Vector3dVector(points)
+block_pcd = block_pcd.voxel_down_sample(voxel_size=2.0)
+block_pcd.paint_uniform_color([0.8, 0.2, 0.2])
+
+# ==========================================
+# [TODO 3 정답] 주축(PCA) 추정 및 기하학적 축 정렬
 # ==========================================
 pts = np.asarray(block_pcd.points)
-mean = np.mean(pts, axis=0) # 무게중심
+mean = np.mean(pts, axis=0)
 
-# 공분산 행렬 계산 및 고윳값 분해
 centered_pts = pts - mean
 cov = np.cov(centered_pts, rowvar=False)
 eigenvalues, eigenvectors = np.linalg.eigh(cov)
 
-# 회전 행렬의 조건(det(R) = 1)을 만족시키기 위해 우수계 확인
-if np.linalg.det(eigenvectors) &lt; 0:
-    eigenvectors[:, 2] = -eigenvectors[:, 2]
+# eigh 함수는 오름차순 반환하므로 마지막 열이 가장 긴 축(분산 최대)
+v0 = eigenvectors[:, 0] # 가장 짧은 축
+v1 = eigenvectors[:, 1] # 중간 축
+v2 = eigenvectors[:, 2] # 가장 긴 축 (블록의 100mm 방향)
 
-# ==========================================
-# 4-1: 초기 정렬 매트릭스 생성
-# ==========================================
+# 타겟 템플릿의 Y축(1번 열) 자리에 블록의 가장 긴 축(v2)을 할당. 우수계 유지.
+R_init = np.column_stack((v0, v2, -v1))
+
 init_transform = np.eye(4)
-init_transform[:3, :3] = eigenvectors # 주축을 회전 행렬로 사용
-init_transform[:3, 3] = mean         # 무게중심을 이동 벡터로 사용
+init_transform[:3, :3] = R_init 
+init_transform[:3, 3] = mean         
 
 # ==========================================
-# 4-2: ICP 정합 실행 및 추출
+# [TODO 4 정답] ICP 정합 실행
 # ==========================================
 threshold = 10.0
 icp_result = o3d.pipelines.registration.registration_icp(
@@ -936,17 +1032,12 @@ icp_result = o3d.pipelines.registration.registration_icp(
     o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=2000)
 )
 
-# 최종 4x4 행렬에서 R, t 분리
 final_transform = icp_result.transformation
 R = final_transform[:3, :3]
 tvec = final_transform[:3, 3]
 
-print("=== ICP Result ===")
-print("Fitness:", icp_result.fitness)
-print("RMSE:", icp_result.inlier_rmse)
-
 # ==========================================
-# 5. 역투영 및 시각화 (제공됨)
+# 5. 역투영 및 시각화
 # ==========================================
 rvec, _ = cv2.Rodrigues(R)
 dist_coeffs = np.zeros((4,1))
@@ -960,7 +1051,7 @@ cv2.putText(img_projected, f"Dist: {distance:.1f}mm", (20, 40),
 
 plt.figure(figsize=(10, 8))
 plt.imshow(img_projected)
-plt.title('Step 5: Reprojection & Axes (ICP Result)')
+plt.title('Final Result: Reprojection & Axes')
 plt.axis('off')
 plt.show()</code></pre>
                 </div>
